@@ -12,37 +12,36 @@
             и расписания пород.
         </p>
         <hr>
-        <p class="mb-3">Доступные разделы:</p>
-        <div class="d-flex flex-wrap gap-2">
-            {#<a href="{% url 'dog_list' %}" class="btn btn-primary">#}
-            {#    <i class="bi bi-github"></i> Собаки#}
-            {#</a>#}
-        </div>
     </div>
 </div>
 
 <div class="row g-4">
     <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm position-relative">
             <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-people text-primary"></i> Участники</h5>
+                <h5 class="card-title">
+                    <i class="bi bi-clipboard-check text-primary"></i> Участники <!-- Заменить везде иконку -->
+                </h5>
                 <p class="card-text">Собаки, их владельцы, породы и клубы.</p>
+                <a href="{% url 'dog_list' %}" class="stretched-link" aria-label="Перейти к собакам"></a>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm position-relative">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-trophy text-warning"></i> Эксперты и ринги</h5>
                 <p class="card-text">Распределение специализаций экспертов по рингам.</p>
+                <!-- Ссылку поставлю позже, когда будет CRUD для экспертов -->
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm position-relative">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-award text-success"></i> Медали</h5>
                 <p class="card-text">Результаты выставки, медалисты по породам.</p>
+                <!-- Ссылку поставлю позже, когда будет CRUD для медалей -->
             </div>
         </div>
     </div>

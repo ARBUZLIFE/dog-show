@@ -145,6 +145,8 @@ class Medal(models.Model):
         on_delete=models.PROTECT,
         related_name='medals',
         verbose_name='Порода',
+        blank=True,
+        null=True,  # заполняется автоматически
     )
     medal_type = models.CharField('Тип медали', max_length=10, choices=MEDAL_TYPES)
     awarded_at = models.DateField('Дата награждения')
@@ -156,6 +158,12 @@ class Medal(models.Model):
 
     def __str__(self):
         return f'{self.get_medal_type_display()} — {self.dog.name}'
+
+    def save(self, *args, **kwargs):
+        """Порода медали всегда совпадает с породой собаки."""
+        if self.dog_id and (self.breed_id != self.dog.breed_id):
+            self.breed_id = self.dog.breed_id
+        super().save(*args, **kwargs)
 
 
 class RingBreedSchedule(models.Model):
