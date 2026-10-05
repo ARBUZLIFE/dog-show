@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная — Выставка собак{% endblock %}
+
+{% block content %}
+<div class="p-5 mb-4 bg-light rounded-3 shadow-sm">
+    <div class="container-fluid py-3">
+        <h1 class="display-5 fw-bold">Система «Выставка собак»</h1>
+        <p class="fs-5 col-md-10">
+            Информационная система для организаторов выставки собак:
+            учёт собак-участников, экспертов, рингов, медалей
+            и расписания пород.
+        </p>
+        <hr>
+        <p class="mb-3">Доступные разделы:</p>
+        <div class="d-flex flex-wrap gap-2">
+            {#<a href="{% url 'dog_list' %}" class="btn btn-primary">#}
+            {#    <i class="bi bi-github"></i> Собаки#}
+            {#</a>#}
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-people text-primary"></i> Участники</h5>
+                <p class="card-text">Собаки, их владельцы, породы и клубы.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-trophy text-warning"></i> Эксперты и ринги</h5>
+                <p class="card-text">Распределение специализаций экспертов по рингам.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-award text-success"></i> Медали</h5>
+                <p class="card-text">Результаты выставки, медалисты по породам.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
