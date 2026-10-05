@@ -2,10 +2,26 @@ from django import forms
 from django.core.exceptions import ValidationError
 from datetime import date
 
-from .models import Dog
+from .models import (
+    Dog, Club, Breed, Owner,
+    Ring, Expert, Medal, RingBreedSchedule,
+)
+
+class BootstrapModelForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            widget = field.widget
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs.setdefault('class', 'form-check-input')
+            elif isinstance(widget, (forms.Select, forms.SelectMultiple)):
+                widget.attrs.setdefault('class', 'form-select')
+            else:
+                widget.attrs.setdefault('class', 'form-control')
 
 
-class DogForm(forms.ModelForm):
+class DogForm(BootstrapModelForm):
 
     class Meta:
         model = Dog
@@ -15,17 +31,8 @@ class DogForm(forms.ModelForm):
             'last_vaccination_date', 'is_disqualified',
         ]
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'breed': forms.Select(attrs={'class': 'form-select'}),
-            'club': forms.Select(attrs={'class': 'form-select'}),
-            'owner': forms.Select(attrs={'class': 'form-select'}),
-            'age': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 30}),
-            'pedigree_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'parent_names': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_vaccination_date': forms.DateInput(
-                attrs={'class': 'form-control', 'type': 'date'}
-            ),
-            'is_disqualified': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'last_vaccination_date': forms.DateInput(attrs={'type': 'date'}),
+            'age': forms.NumberInput(attrs={'min': 1, 'max': 30}),
         }
         labels = {
             'name': 'Кличка',
@@ -40,7 +47,6 @@ class DogForm(forms.ModelForm):
         }
 
     def clean_age(self):
-        """Проверка возраста."""
         age = self.cleaned_data.get('age')
         if age is None:
             raise ValidationError('Укажите возраст.')
@@ -64,3 +70,86 @@ class DogForm(forms.ModelForm):
         if qs.exists():
             raise ValidationError('Собака с таким номером родословной уже существует.')
         return number
+
+
+class ClubForm(BootstrapModelForm):
+    class Meta:
+        model = Club
+        fields = ['name']
+        labels = {'name': 'Название клуба'}
+
+
+class BreedForm(BootstrapModelForm):
+    class Meta:
+        model = Breed
+        fields = ['name']
+        labels = {'name': 'Название породы'}
+
+
+class OwnerForm(BootstrapModelForm):
+    class Meta:
+        model = Owner
+        fields = ['full_name', 'passport_data']
+        labels = {
+            'full_name': 'ФИО',
+            'passport_data': 'Паспортные данные',
+        }
+
+
+class RingForm(BootstrapModelForm):
+    class Meta:
+        model = Ring
+        fields = ['number', 'address', 'club']
+        labels = {
+            'number': 'Номер ринга',
+            'address': 'Адрес',
+            'club': 'Клуб',
+        }
+
+
+class ExpertForm(BootstrapModelForm):
+    class Meta:
+        model = Expert
+        fields = ['full_name', 'breed', 'ring', 'club', 'is_active']
+        labels = {
+            'full_name': 'ФИО',
+            'breed': 'Специализация (порода)',
+            'ring': 'Ринг',
+            'club': 'Клуб',
+            'is_active': 'Активен',
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        club = cleaned.get('club')
+        ring = cleaned.get('ring')
+        if club and ring and ring.club_id != club.id:
+            raise ValidationError(
+                'Выбранный ринг принадлежит другому клубу.'
+            )
+        return cleaned
+
+
+class MedalForm(BootstrapModelForm):
+    class Meta:
+        model = Medal
+        fields = ['dog', 'medal_type', 'awarded_at']
+        widgets = {
+            'awarded_at': forms.DateInput(attrs={'type': 'date'}),
+        }
+        labels = {
+            'dog': 'Собака',
+            'medal_type': 'Тип медали',
+            'awarded_at': 'Дата награждения',
+        }
+
+
+class ScheduleForm(BootstrapModelForm):
+    class Meta:
+        model = RingBreedSchedule
+        fields = ['ring', 'breed', 'time_slot']
+        labels = {
+            'ring': 'Ринг',
+            'breed': 'Порода',
+            'time_slot': 'Временной слот',
+        }

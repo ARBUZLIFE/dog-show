@@ -11,7 +11,6 @@
             учёт собак-участников, экспертов, рингов, медалей
             и расписания пород.
         </p>
-        <hr>
     </div>
 </div>
 
@@ -20,28 +19,37 @@
         <div class="card h-100 shadow-sm position-relative">
             <div class="card-body">
                 <h5 class="card-title">
-                    <i class="bi bi-clipboard-check text-primary"></i> Участники <!-- Заменить везде иконку -->
+                    <i class="bi bi-people text-primary"></i> Участники
                 </h5>
                 <p class="card-text">Собаки, их владельцы, породы и клубы.</p>
-                <a href="{% url 'dog_list' %}" class="stretched-link" aria-label="Перейти к собакам"></a>
+                <a href="{% url 'catalog_participants' %}" class="stretched-link"
+                   aria-label="Перейти к участникам"></a>
             </div>
         </div>
     </div>
+
     <div class="col-md-4">
         <div class="card h-100 shadow-sm position-relative">
             <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-trophy text-warning"></i> Эксперты и ринги</h5>
+                <h5 class="card-title">
+                    <i class="bi bi-trophy text-warning"></i> Эксперты и ринги
+                </h5>
                 <p class="card-text">Распределение специализаций экспертов по рингам.</p>
-                <!-- Ссылку поставлю позже, когда будет CRUD для экспертов -->
+                <a href="{% url 'catalog_exhibitions' %}" class="stretched-link"
+                   aria-label="Перейти к экспертам и рингам"></a>
             </div>
         </div>
     </div>
+
     <div class="col-md-4">
         <div class="card h-100 shadow-sm position-relative">
             <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-award text-success"></i> Медали</h5>
+                <h5 class="card-title">
+                    <i class="bi bi-award text-success"></i> Медали
+                </h5>
                 <p class="card-text">Результаты выставки, медалисты по породам.</p>
-                <!-- Ссылку поставлю позже, когда будет CRUD для медалей -->
+                <a href="{% url 'medal_list' %}" class="stretched-link"
+                   aria-label="Перейти к медалям"></a>
             </div>
         </div>
     </div>

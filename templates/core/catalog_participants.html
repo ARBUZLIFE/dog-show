@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Участники — Выставка собак{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'catalog' %}">Справочники</a></li>
+        <li class="breadcrumb-item active">Участники</li>
+    </ol>
+</nav>
+
+<div class="mb-4">
+    <h1><i class="bi bi-people"></i> Участники</h1>
+    <p class="text-muted">Собаки, хозяева, породы и клубы.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-clipboard-check display-4 text-primary"></i>
+                <h5 class="card-title mt-3">Собаки</h5>
+                <p class="card-text small">Участники выставки.</p>
+                <a href="{% url 'dog_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-person-badge display-4 text-info"></i>
+                <h5 class="card-title mt-3">Хозяева</h5>
+                <p class="card-text small">Владельцы собак.</p>
+                <a href="{% url 'owner_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-tags display-4 text-success"></i>
+                <h5 class="card-title mt-3">Породы</h5>
+                <p class="card-text small">Породы собак.</p>
+                <a href="{% url 'breed_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-diagram-3 display-4 text-secondary"></i>
+                <h5 class="card-title mt-3">Клубы</h5>
+                <p class="card-text small">Кинологические клубы.</p>
+                <a href="{% url 'club_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

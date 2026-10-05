@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Эксперты и ринги — Выставка собак{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'catalog' %}">Справочники</a></li>
+        <li class="breadcrumb-item active">Эксперты и ринги</li>
+    </ol>
+</nav>
+
+<div class="mb-4">
+    <h1><i class="bi bi-trophy"></i> Эксперты и ринги</h1>
+    <p class="text-muted">Судьи, площадки и распределение пород.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-person-workspace display-4 text-danger"></i>
+                <h5 class="card-title mt-3">Эксперты</h5>
+                <p class="card-text small">Судьи выставки.</p>
+                <a href="{% url 'expert_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-geo-alt display-4 text-warning"></i>
+                <h5 class="card-title mt-3">Ринги</h5>
+                <p class="card-text small">Площадки для показа.</p>
+                <a href="{% url 'ring_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-week display-4 text-primary"></i>
+                <h5 class="card-title mt-3">Расписания рингов</h5>
+                <p class="card-text small">Породы по рингам и времени.</p>
+                <a href="{% url 'schedule_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

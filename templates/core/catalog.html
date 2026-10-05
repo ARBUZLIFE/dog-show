@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Справочники — Выставка собак{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+        <li class="breadcrumb-item active">Справочники</li>
+    </ol>
+</nav>
+
+<div class="mb-4">
+    <h1><i class="bi bi-grid"></i> Все справочники</h1>
+    <p class="text-muted">Полный список разделов системы.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-clipboard-check display-4 text-primary"></i>
+                <h5 class="card-title mt-3">Собаки</h5>
+                <p class="card-text small">Участники выставки.</p>
+                <a href="{% url 'dog_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-person-badge display-4 text-info"></i>
+                <h5 class="card-title mt-3">Хозяева</h5>
+                <p class="card-text small">Владельцы собак.</p>
+                <a href="{% url 'owner_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-tags display-4 text-success"></i>
+                <h5 class="card-title mt-3">Породы</h5>
+                <p class="card-text small">Породы собак.</p>
+                <a href="{% url 'breed_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-diagram-3 display-4 text-secondary"></i>
+                <h5 class="card-title mt-3">Клубы</h5>
+                <p class="card-text small">Кинологические клубы.</p>
+                <a href="{% url 'club_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-geo-alt display-4 text-warning"></i>
+                <h5 class="card-title mt-3">Ринги</h5>
+                <p class="card-text small">Площадки для показа.</p>
+                <a href="{% url 'ring_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-person-workspace display-4 text-danger"></i>
+                <h5 class="card-title mt-3">Эксперты</h5>
+                <p class="card-text small">Судьи выставки.</p>
+                <a href="{% url 'expert_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-award display-4 text-success"></i>
+                <h5 class="card-title mt-3">Медали</h5>
+                <p class="card-text small">Результаты выставки.</p>
+                <a href="{% url 'medal_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-week display-4 text-primary"></i>
+                <h5 class="card-title mt-3">Расписания</h5>
+                <p class="card-text small">Породы по рингам.</p>
+                <a href="{% url 'schedule_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
