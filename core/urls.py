@@ -1,4 +1,5 @@
 from django.urls import path
+from . import reports as report_views
 from . import views
 
 urlpatterns = [
@@ -8,6 +9,7 @@ urlpatterns = [
     path('catalog/', views.catalog, name='catalog'),
     path('catalog/participants/', views.catalog_participants, name='catalog_participants'),
     path('catalog/exhibitions/', views.catalog_exhibitions, name='catalog_exhibitions'),
+    path('catalog/medals/', views.catalog_medals, name='catalog_medals'),
 
     # Собаки
     path('dogs/', views.DogListView.as_view(), name='dog_list'),
@@ -57,6 +59,8 @@ urlpatterns = [
     path('medals/<int:pk>/', views.MedalDetailView.as_view(), name='medal_detail'),
     path('medals/<int:pk>/update/', views.MedalUpdateView.as_view(), name='medal_update'),
     path('medals/<int:pk>/delete/', views.MedalDeleteView.as_view(), name='medal_delete'),
+    path('medals/by-club/', views.medals_by_club, name='medals_by_club'),
+    path('medals/record-holders/', views.record_holders, name='record_holders'),
 
     # Расписания
     path('schedules/', views.ScheduleListView.as_view(), name='schedule_list'),
@@ -64,4 +68,13 @@ urlpatterns = [
     path('schedules/<int:pk>/', views.ScheduleDetailView.as_view(), name='schedule_detail'),
     path('schedules/<int:pk>/update/', views.ScheduleUpdateView.as_view(), name='schedule_update'),
     path('schedules/<int:pk>/delete/', views.ScheduleDeleteView.as_view(), name='schedule_delete'),
+
+    # Аналитические отчёты
+    path('reports/', report_views.reports_index, name='reports'),
+    path('reports/ring-by-owner/', report_views.query_ring_by_owner, name='report_1'),
+    path('reports/breeds-by-club/', report_views.query_breeds_by_club, name='report_2'),
+    path('reports/medals-by-club/', report_views.query_medals_by_club, name='report_3'),
+    path('reports/experts-by-breed/', report_views.query_experts_by_breed, name='report_4'),
+    path('reports/ring-specializations/', report_views.query_ring_specializations, name='report_5'),
+    path('reports/record-holders/', report_views.query_record_holders, name='report_6'),
 ]

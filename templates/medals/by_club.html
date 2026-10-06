@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+
+{% block title %}Медали по клубам — Выставка собак{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'catalog_medals' %}">Медали</a></li>
+        <li class="breadcrumb-item active">Медали по клубам</li>
+    </ol>
+</nav>
+
+<h1 class="mb-4"><i class="bi bi-diagram-3"></i> Медали по клубам</h1>
+
+{% if rows %}
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-primary">
+            <tr>
+                <th>Клуб</th>
+                <th class="text-center">🥇 Золото</th>
+                <th class="text-center">🥈 Серебро</th>
+                <th class="text-center">🥉 Бронза</th>
+                <th class="text-center">Всего</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rows %}
+                <tr>
+                    <td>
+                        <a href="{% url 'club_detail' r.club.pk %}">
+                            <strong>{{ r.club.name }}</strong>
+                        </a>
+                    </td>
+                    <td class="text-center">
+                        {% if r.gold %}<span class="badge bg-warning text-dark">{{ r.gold }}</span>{% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if r.silver %}<span class="badge bg-secondary">{{ r.silver }}</span>{% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if r.bronze %}<span class="badge bg-danger">{{ r.bronze }}</span>{% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td class="text-center">
+                        <strong>{{ r.total }}</strong>
+                        <span class="text-muted small">
+                            {{ r.total|ru_plural:"медаль,медали,медалей" }}
+                        </span>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <div class="alert alert-info">Клубов пока нет.</div>
+{% endif %}
+{% endblock %}

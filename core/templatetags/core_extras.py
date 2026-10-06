@@ -15,6 +15,27 @@ def get_attribute(obj, path):
         obj = getattr(obj, part, None)
     return obj
 
+@register.filter
+def ru_plural(value, forms):
+    try:
+        n = abs(int(value))
+    except (ValueError, TypeError):
+        return ''
+
+    parts = forms.split(',')
+    if len(parts) != 3:
+        return ''
+
+    n100 = n % 100
+    n10 = n % 10
+
+    if 11 <= n100 <= 19:
+        return parts[2]
+    if n10 == 1:
+        return parts[0]
+    if 2 <= n10 <= 4:
+        return parts[1]
+    return parts[2]
 
 @register.filter
 def render_cell(obj, column):

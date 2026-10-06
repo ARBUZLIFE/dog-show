@@ -58,6 +58,12 @@ class Ring(models.Model):
     def __str__(self):
         return f'Ринг №{self.number} ({self.club.name})'
 
+    def get_schedule_summary(self):
+        slots = self.schedule.select_related('breed').order_by('time_slot')
+        if not slots.exists():
+            return '—'
+        return '; '.join(f'{s.breed.name} ({s.time_slot})' for s in slots)
+
 
 class Expert(models.Model):
     full_name = models.CharField('ФИО', max_length=200)
@@ -160,7 +166,6 @@ class Medal(models.Model):
         return f'{self.get_medal_type_display()} — {self.dog.name}'
 
     def save(self, *args, **kwargs):
-        """Порода медали всегда совпадает с породой собаки."""
         if self.dog_id and (self.breed_id != self.dog.breed_id):
             self.breed_id = self.dog.breed_id
         super().save(*args, **kwargs)

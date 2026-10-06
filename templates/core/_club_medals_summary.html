@@ -1,0 +1,40 @@
+{% load core_extras %}
+{% if section.medal_summary.total %}
+    <table class="table table-striped align-middle">
+        <thead class="table-primary">
+            <tr>
+                <th>Тип медали</th>
+                <th class="text-center">Количество</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>🥇 Золото</td>
+                <td class="text-center">
+                    <span class="badge bg-warning text-dark">{{ section.medal_summary.gold }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td>🥈 Серебро</td>
+                <td class="text-center">
+                    <span class="badge bg-secondary">{{ section.medal_summary.silver }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td>🥉 Бронза</td>
+                <td class="text-center">
+                    <span class="badge bg-danger">{{ section.medal_summary.bronze }}</span>
+                </td>
+            </tr>
+            <tr class="table-secondary">
+                <td><strong>Всего</strong></td>
+                <td class="text-center">
+                    <strong>{{ section.medal_summary.total }}</strong>
+                    {{ section.medal_summary.total|ru_plural:"медаль,медали,медалей" }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+{% else %}
+    <div class="alert alert-light border text-muted">{{ section.empty_message }}</div>
+{% endif %}

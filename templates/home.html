@@ -15,41 +15,50 @@
 </div>
 
 <div class="row g-4">
-    <div class="col-md-4">
+    <div class="col-md-6 col-lg-3">
         <div class="card h-100 shadow-sm position-relative">
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="bi bi-people text-primary"></i> Участники
                 </h5>
-                <p class="card-text">Собаки, их владельцы, породы и клубы.</p>
-                <a href="{% url 'catalog_participants' %}" class="stretched-link"
-                   aria-label="Перейти к участникам"></a>
+                <p class="card-text small">Собаки, их владельцы, породы и клубы.</p>
+                <a href="{% url 'catalog_participants' %}" class="stretched-link"></a>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-6 col-lg-3">
         <div class="card h-100 shadow-sm position-relative">
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="bi bi-trophy text-warning"></i> Эксперты и ринги
                 </h5>
-                <p class="card-text">Распределение специализаций экспертов по рингам.</p>
-                <a href="{% url 'catalog_exhibitions' %}" class="stretched-link"
-                   aria-label="Перейти к экспертам и рингам"></a>
+                <p class="card-text small">Судьи, площадки, расписание.</p>
+                <a href="{% url 'catalog_exhibitions' %}" class="stretched-link"></a>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-6 col-lg-3">
         <div class="card h-100 shadow-sm position-relative">
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="bi bi-award text-success"></i> Медали
                 </h5>
-                <p class="card-text">Результаты выставки, медалисты по породам.</p>
-                <a href="{% url 'medal_list' %}" class="stretched-link"
-                   aria-label="Перейти к медалям"></a>
+                <p class="card-text small">Результаты выставки.</p>
+                <a href="{% url 'medal_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-bar-chart text-danger"></i> Аналитика
+                </h5>
+                <p class="card-text small">Отчёты.</p>
+                <a href="{% url 'reports' %}" class="stretched-link"></a>
             </div>
         </div>
     </div>

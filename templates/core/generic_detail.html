@@ -65,7 +65,9 @@
         {{ section.title }}
     </h4>
 
-    {% if section.items %}
+    {% if section.custom_template %}
+        {% include section.custom_template with section=section %}
+    {% elif section.items %}
         <div class="table-responsive">
             <table class="table table-striped table-hover align-middle">
                 <thead class="table-primary">
@@ -81,8 +83,7 @@
                             {% for col in section.columns %}
                                 <td>
                                     {% if forloop.first and section.item_url_name %}
-                                        <a href="{% url section.item_url_name item.pk %}"
-                                           class="text-decoration-none">
+                                        <a href="{% url section.item_url_name item.pk %}" class="text-decoration-none">
                                             {{ item|render_cell:col }}
                                         </a>
                                     {% else %}

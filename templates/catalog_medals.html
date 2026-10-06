@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Медали — Выставка собак{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'catalog' %}">Справочники</a></li>
+        <li class="breadcrumb-item active">Медали</li>
+    </ol>
+</nav>
+
+<div class="mb-4">
+    <h1><i class="bi bi-award"></i> Медали</h1>
+    <p class="text-muted">Награды, результаты и достижения.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-list-check display-4 text-primary"></i>
+                <h5 class="card-title mt-3">Все медали</h5>
+                <p class="card-text small">Полный список наград собак.</p>
+                <a href="{% url 'medal_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-diagram-3 display-4 text-secondary"></i>
+                <h5 class="card-title mt-3">Медали по клубам</h5>
+                <p class="card-text small">Сколько и каких медалей заслужил каждый клуб.</p>
+                <a href="{% url 'medals_by_club' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm position-relative">
+            <div class="card-body text-center">
+                <i class="bi bi-trophy display-4 text-warning"></i>
+                <h5 class="card-title mt-3">Рекордсмены по породам</h5>
+                <p class="card-text small">Собаки с наибольшим числом медалей в каждой породе.</p>
+                <a href="{% url 'record_holders' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

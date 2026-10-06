@@ -1,0 +1,28 @@
+{% load core_extras %}
+{% if section.items %}
+    <table class="table table-striped align-middle">
+        <thead class="table-primary">
+            <tr>
+                <th>Порода</th>
+                <th>Собак в клубе</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in section.items %}
+                <tr>
+                    <td>
+                        <a href="{% url 'breed_detail' item.breed.pk %}">
+                            {{ item.breed.name }}
+                        </a>
+                    </td>
+                    <td>
+                        {{ item.dog_count }}
+                        {{ item.dog_count|ru_plural:"собака,собаки,собак" }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <div class="alert alert-light border text-muted">{{ section.empty_message }}</div>
+{% endif %}

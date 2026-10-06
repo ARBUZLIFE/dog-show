@@ -1,8 +1,14 @@
+from collections import defaultdict
+
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.db.models import Count
+from django.views.generic import (
+    ListView, CreateView, UpdateView, DeleteView, DetailView,
+)
 
 from .models import (
     Dog, Club, Breed, Owner,
@@ -14,7 +20,7 @@ from .forms import (
 )
 
 
-# Базовые CBV
+# БАЗОВЫЕ CBV
 
 class MessageCreateView(LoginRequiredMixin, CreateView):
     cancel_url = None
@@ -143,10 +149,9 @@ class MessageDetailView(LoginRequiredMixin, DetailView):
         return ctx
 
 
-# Хелперы для info_rows
+# ХЕЛПЕРЫ
 
 def row(label, value, link=None, strong=False, code=False, muted=False, badge=None):
-    """Собирает строку для таблицы «Основные сведения»."""
     return {
         'label': label,
         'value': value,
@@ -158,7 +163,7 @@ def row(label, value, link=None, strong=False, code=False, muted=False, badge=No
     }
 
 
-# Главная и каталоги
+# ГЛАВНАЯ И КАТАЛОГИ
 
 def home(request):
     return render(request, 'home.html')
@@ -174,6 +179,10 @@ def catalog_participants(request):
 
 def catalog_exhibitions(request):
     return render(request, 'core/catalog_exhibitions.html')
+
+
+def catalog_medals(request):
+    return render(request, 'core/catalog_medals.html')
 
 
 # СОБАКИ
@@ -251,9 +260,12 @@ class DogDetailView(MessageDetailView):
         dog = self.object
         return [
             row('Кличка', dog.name, strong=True),
-            row('Порода', dog.breed.name, link=reverse('breed_detail', args=[dog.breed.pk])),
-            row('Клуб', dog.club.name, link=reverse('club_detail', args=[dog.club.pk])),
-            row('Хозяин', dog.owner.full_name, link=reverse('owner_detail', args=[dog.owner.pk])),
+            row('Порода', dog.breed.name,
+                link=reverse('breed_detail', args=[dog.breed.pk])),
+            row('Клуб', dog.club.name,
+                link=reverse('club_detail', args=[dog.club.pk])),
+            row('Хозяин', dog.owner.full_name,
+                link=reverse('owner_detail', args=[dog.owner.pk])),
             row('Возраст', f'{dog.age} лет'),
             row('№ родословной', dog.pedigree_number, code=True),
             row('Родители', dog.parent_names),
@@ -265,7 +277,7 @@ class DogDetailView(MessageDetailView):
 
     def get_related_sections(self):
         dog = self.object
-        return [
+        sections = [
             {
                 'title': 'Медали собаки',
                 'icon': 'bi-award',
@@ -279,6 +291,24 @@ class DogDetailView(MessageDetailView):
                 'empty_message': 'Собака не получала медалей.',
             },
         ]
+
+        schedule = dog.breed.schedule.select_related('ring', 'ring__club')
+        if schedule.exists():
+            sections.append({
+                'title': 'Расписание показа',
+                'icon': 'bi-calendar-week',
+                'items': schedule,
+                'item_url_name': 'schedule_detail',
+                'columns': [
+                    {'label': 'Ринг', 'attr': 'ring.number'},
+                    {'label': 'Клуб', 'attr': 'ring.club.name'},
+                    {'label': 'Адрес', 'attr': 'ring.address'},
+                    {'label': 'Время', 'attr': 'time_slot', 'style': 'strong'},
+                ],
+                'empty_message': 'Для этой породы не назначено ринга.',
+            })
+
+        return sections
 
 
 # КЛУБЫ
@@ -351,6 +381,32 @@ class ClubDetailView(MessageDetailView):
 
     def get_related_sections(self):
         club = self.object
+
+        breeds = (
+            Breed.objects
+            .filter(dogs__club=club)
+            .distinct()
+            .order_by('name')
+        )
+        breeds_with_count = [
+            {
+                'breed': b,
+                'dog_count': Dog.objects.filter(club=club, breed=b).count(),
+            }
+            for b in breeds
+        ]
+
+        medal_qs = Medal.objects.filter(dog__club=club).values('medal_type')
+        medal_counts = defaultdict(int)
+        for m in medal_qs:
+            medal_counts[m['medal_type']] += 1
+        medal_summary = {
+            'gold': medal_counts.get('gold', 0),
+            'silver': medal_counts.get('silver', 0),
+            'bronze': medal_counts.get('bronze', 0),
+            'total': sum(medal_counts.values()),
+        }
+
         return [
             {
                 'title': 'Ринги клуба',
@@ -388,6 +444,20 @@ class ClubDetailView(MessageDetailView):
                      'false_label': 'Уволен', 'false_color': 'secondary'},
                 ],
                 'empty_message': 'В клубе нет экспертов.',
+            },
+            {
+                'title': 'Породы клуба',
+                'icon': 'bi-tags',
+                'custom_template': 'core/_breed_summary_table.html',
+                'items': breeds_with_count,
+                'empty_message': 'У клуба нет собак — породы не определены.',
+            },
+            {
+                'title': 'Медали клуба',
+                'icon': 'bi-award',
+                'custom_template': 'core/_club_medals_summary.html',
+                'medal_summary': medal_summary,
+                'empty_message': 'У собак этого клуба нет медалей.',
             },
         ]
 
@@ -498,10 +568,11 @@ class BreedDetailView(MessageDetailView):
             {
                 'title': 'Расписание показов',
                 'icon': 'bi-calendar-week',
-                'items': breed.schedule.select_related('ring'),
+                'items': breed.schedule.select_related('ring', 'ring__club'),
                 'item_url_name': 'schedule_detail',
                 'columns': [
                     {'label': 'Ринг', 'attr': 'ring.number'},
+                    {'label': 'Клуб', 'attr': 'ring.club.name'},
                     {'label': 'Слот', 'attr': 'time_slot'},
                 ],
                 'empty_message': 'Порода не включена в расписание.',
@@ -612,6 +683,7 @@ class RingListView(MessageListView):
         {'label': 'Номер', 'attr': 'number', 'style': 'strong'},
         {'label': 'Адрес', 'attr': 'address'},
         {'label': 'Клуб', 'attr': 'club.name'},
+        {'label': 'Расписание', 'attr': 'get_schedule_summary'},
     ]
 
     def get_queryset(self):
@@ -666,7 +738,8 @@ class RingDetailView(MessageDetailView):
         return [
             row('Номер', ring.number, strong=True),
             row('Адрес', ring.address),
-            row('Клуб', ring.club.name, link=reverse('club_detail', args=[ring.club.pk])),
+            row('Клуб', ring.club.name,
+                link=reverse('club_detail', args=[ring.club.pk])),
         ]
 
     def get_related_sections(self):
@@ -855,13 +928,74 @@ class MedalDetailView(MessageDetailView):
 
     def get_info_rows(self):
         medal = self.object
+        badge_color = {
+            'Золото': 'warning',
+            'Серебро': 'secondary',
+            'Бронза': 'danger',
+        }.get(medal.get_medal_type_display(), 'secondary')
+
         return [
-            row('Собака', medal.dog.name, link=reverse('dog_detail', args=[medal.dog.pk]), strong=True),
-            row('Порода', medal.breed.name, link=reverse('breed_detail', args=[medal.breed.pk])),
-            row('Тип', medal.get_medal_type_display(),
-                badge={'Золото': 'warning', 'Серебро': 'secondary', 'Бронза': 'danger'}.get(medal.get_medal_type_display(), 'secondary')),
+            row('Собака', medal.dog.name,
+                link=reverse('dog_detail', args=[medal.dog.pk]), strong=True),
+            row('Порода', medal.breed.name,
+                link=reverse('breed_detail', args=[medal.breed.pk])),
+            row('Тип', medal.get_medal_type_display(), badge=badge_color),
             row('Дата награждения', medal.awarded_at.strftime('%d.%m.%Y')),
         ]
+
+
+@login_required
+def medals_by_club(request):
+    clubs = Club.objects.all()
+    rows = []
+
+    for club in clubs:
+        medals = Medal.objects.filter(dog__club=club).values('medal_type')
+        counts = defaultdict(int)
+        for m in medals:
+            counts[m['medal_type']] += 1
+
+        rows.append({
+            'club': club,
+            'gold': counts.get('gold', 0),
+            'silver': counts.get('silver', 0),
+            'bronze': counts.get('bronze', 0),
+            'total': sum(counts.values()),
+        })
+
+    rows.sort(key=lambda r: r['total'], reverse=True)
+
+    return render(request, 'medals/by_club.html', {'rows': rows})
+
+
+@login_required
+def record_holders(request):
+    dogs = (
+        Dog.objects
+        .annotate(medal_count=Count('medals'))
+        .filter(medal_count__gt=0)
+        .select_related('breed', 'owner', 'club')
+    )
+
+    by_breed = defaultdict(list)
+    for dog in dogs:
+        by_breed[dog.breed].append(dog)
+
+    records = []
+    for breed, breed_dogs in by_breed.items():
+        max_count = max(d.medal_count for d in breed_dogs)
+        champions = [d for d in breed_dogs if d.medal_count == max_count]
+        total_breed_medals = sum(d.medal_count for d in breed_dogs)
+        records.append({
+            'breed': breed,
+            'max_count': max_count,
+            'champions': champions,
+            'total_breed_medals': total_breed_medals,
+        })
+
+    records.sort(key=lambda x: (-x['max_count'], x['breed'].name))
+
+    return render(request, 'medals/record_holders.html', {'records': records})
 
 
 # РАСПИСАНИЯ
