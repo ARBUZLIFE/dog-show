@@ -1,9 +1,8 @@
 from django.shortcuts import render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 
 from .models import (
     Dog, Club, Breed, Owner,
@@ -15,7 +14,7 @@ from .forms import (
 )
 
 
-# Базовые классы с уведомлениями
+# Базовые CBV
 
 class MessageCreateView(LoginRequiredMixin, CreateView):
     cancel_url = None
@@ -79,58 +78,130 @@ class MessageDeleteView(LoginRequiredMixin, DeleteView):
         return ctx
 
 
-# Главная
+class MessageListView(LoginRequiredMixin, ListView):
+    template_name = 'core/generic_list.html'
+    context_object_name = 'objects'
+
+    detail_url_name = None
+    list_title = ''
+    list_icon = ''
+    create_url = None
+    create_label = 'Добавить'
+    empty_message = 'Пока ничего нет.'
+    update_url_name = None
+    delete_url_name = None
+    columns = []
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'detail_url_name': self.detail_url_name,
+            'list_title': self.list_title,
+            'list_icon': self.list_icon,
+            'create_url': self.create_url,
+            'create_label': self.create_label,
+            'empty_message': self.empty_message,
+            'update_url_name': self.update_url_name,
+            'delete_url_name': self.delete_url_name,
+            'columns': self.columns,
+        })
+        return ctx
+
+
+class MessageDetailView(LoginRequiredMixin, DetailView):
+    template_name = 'core/generic_detail.html'
+    context_object_name = 'object'
+
+    detail_title = ''
+    detail_icon = ''
+    update_url_name = None
+    delete_url_name = None
+    list_url_name = None
+    breadcrumbs = []
+
+    def get_detail_title(self):
+        return self.detail_title or str(self.object)
+
+    def get_info_rows(self):
+        return []
+
+    def get_related_sections(self):
+        return []
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'detail_title': self.get_detail_title(),
+            'detail_icon': self.detail_icon,
+            'update_url_name': self.update_url_name,
+            'delete_url_name': self.delete_url_name,
+            'list_url_name': self.list_url_name,
+            'breadcrumbs': self.breadcrumbs,
+            'info_rows': self.get_info_rows(),
+            'related_sections': self.get_related_sections(),
+        })
+        return ctx
+
+
+# Хелперы для info_rows
+
+def row(label, value, link=None, strong=False, code=False, muted=False, badge=None):
+    """Собирает строку для таблицы «Основные сведения»."""
+    return {
+        'label': label,
+        'value': value,
+        'link': link,
+        'strong': strong,
+        'code': code,
+        'muted': muted,
+        'badge': badge,
+    }
+
+
+# Главная и каталоги
 
 def home(request):
     return render(request, 'home.html')
 
 
-# Каталог
 def catalog(request):
     return render(request, 'core/catalog.html')
 
+
 def catalog_participants(request):
-    """Хаб: Участники."""
     return render(request, 'core/catalog_participants.html')
 
+
 def catalog_exhibitions(request):
-    """Хаб: Эксперты и ринги."""
     return render(request, 'core/catalog_exhibitions.html')
 
 
-# Собаки
+# СОБАКИ
 
-class DogListView(LoginRequiredMixin, ListView):
+class DogListView(MessageListView):
     model = Dog
-    template_name = 'core/generic_list.html'
-    context_object_name = 'objects'
+    list_title = 'Собаки'
+    list_icon = 'bi-clipboard-check'
+    create_url = 'dog_create'
+    create_label = 'Добавить собаку'
+    empty_message = 'Пока нет ни одной собаки.'
+    update_url_name = 'dog_update'
+    delete_url_name = 'dog_delete'
+    detail_url_name = 'dog_detail'
+    columns = [
+        {'label': 'Кличка', 'attr': 'name', 'style': 'strong'},
+        {'label': 'Порода', 'attr': 'breed.name'},
+        {'label': 'Клуб', 'attr': 'club.name'},
+        {'label': 'Хозяин', 'attr': 'owner.full_name'},
+        {'label': 'Возраст', 'attr': 'age'},
+        {'label': '№ родословной', 'attr': 'pedigree_number', 'style': 'code'},
+        {'label': 'Статус', 'attr': 'is_disqualified', 'style': 'bool_badge',
+         'true_label': 'Отстранена', 'true_color': 'danger',
+         'false_label': 'Участвует', 'false_color': 'success'},
+    ]
 
     def get_queryset(self):
         return Dog.objects.select_related('breed', 'club', 'owner')
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.update({
-            'list_title': 'Собаки',
-            'list_icon': 'bi-clipboard-check',
-            'create_url': 'dog_create',
-            'create_label': 'Добавить собаку',
-            'empty_message': 'Пока нет ни одной собаки.',
-            'update_url_name': 'dog_update',
-            'delete_url_name': 'dog_delete',
-            'columns': [
-                {'label': 'Кличка', 'attr': 'name', 'style': 'strong'},
-                {'label': 'Порода', 'attr': 'breed.name'},
-                {'label': 'Клуб', 'attr': 'club.name'},
-                {'label': 'Хозяин', 'attr': 'owner.full_name'},
-                {'label': 'Возраст', 'attr': 'age'},
-                {'label': '№ родословной', 'attr': 'pedigree_number', 'style': 'code'},
-                {'label': 'Статус', 'attr': 'is_disqualified', 'style': 'bool_badge',
-                 'true_label': 'Отстранена', 'true_color': 'danger',
-                 'false_label': 'Участвует', 'false_color': 'success'},
-            ],
-        })
-        return ctx
 
 
 class DogCreateView(MessageCreateView):
@@ -166,29 +237,66 @@ class DogDeleteView(MessageDeleteView):
         return f'Собака «{obj.name}» удалена.'
 
 
-# Клубы
+class DogDetailView(MessageDetailView):
+    model = Dog
+    detail_icon = 'bi-clipboard-check'
+    update_url_name = 'dog_update'
+    delete_url_name = 'dog_delete'
+    list_url_name = 'dog_list'
 
-class ClubListView(LoginRequiredMixin, ListView):
+    def get_detail_title(self):
+        return f'Собака: {self.object.name}'
+
+    def get_info_rows(self):
+        dog = self.object
+        return [
+            row('Кличка', dog.name, strong=True),
+            row('Порода', dog.breed.name, link=reverse('breed_detail', args=[dog.breed.pk])),
+            row('Клуб', dog.club.name, link=reverse('club_detail', args=[dog.club.pk])),
+            row('Хозяин', dog.owner.full_name, link=reverse('owner_detail', args=[dog.owner.pk])),
+            row('Возраст', f'{dog.age} лет'),
+            row('№ родословной', dog.pedigree_number, code=True),
+            row('Родители', dog.parent_names),
+            row('Дата прививки', dog.last_vaccination_date.strftime('%d.%m.%Y')),
+            row('Статус',
+                'Отстранена' if dog.is_disqualified else 'Участвует',
+                badge='danger' if dog.is_disqualified else 'success'),
+        ]
+
+    def get_related_sections(self):
+        dog = self.object
+        return [
+            {
+                'title': 'Медали собаки',
+                'icon': 'bi-award',
+                'items': dog.medals.select_related('breed'),
+                'item_url_name': 'medal_detail',
+                'columns': [
+                    {'label': 'Тип', 'attr': 'get_medal_type_display', 'style': 'medal_badge'},
+                    {'label': 'Порода', 'attr': 'breed.name'},
+                    {'label': 'Дата', 'attr': 'awarded_at', 'style': 'date'},
+                ],
+                'empty_message': 'Собака не получала медалей.',
+            },
+        ]
+
+
+# КЛУБЫ
+
+class ClubListView(MessageListView):
     model = Club
-    template_name = 'core/generic_list.html'
-    context_object_name = 'objects'
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.update({
-            'list_title': 'Клубы',
-            'list_icon': 'bi-diagram-3',
-            'create_url': 'club_create',
-            'create_label': 'Добавить клуб',
-            'empty_message': 'Пока нет ни одного клуба.',
-            'update_url_name': 'club_update',
-            'delete_url_name': 'club_delete',
-            'columns': [
-                {'label': 'Название', 'attr': 'name', 'style': 'strong'},
-                {'label': 'Дата создания', 'attr': 'created_at', 'style': 'datetime'},
-            ],
-        })
-        return ctx
+    list_title = 'Клубы'
+    list_icon = 'bi-diagram-3'
+    create_url = 'club_create'
+    create_label = 'Добавить клуб'
+    empty_message = 'Пока нет ни одного клуба.'
+    update_url_name = 'club_update'
+    delete_url_name = 'club_delete'
+    detail_url_name = 'club_detail'
+    columns = [
+        {'label': 'Название', 'attr': 'name', 'style': 'strong'},
+        {'label': 'Дата создания', 'attr': 'created_at', 'style': 'datetime'},
+    ]
 
 
 class ClubCreateView(MessageCreateView):
@@ -223,28 +331,82 @@ class ClubDeleteView(MessageDeleteView):
     def get_success_message(self, obj):
         return f'Клуб «{obj.name}» удалён.'
 
-# Породы
 
-class BreedListView(LoginRequiredMixin, ListView):
+class ClubDetailView(MessageDetailView):
+    model = Club
+    detail_icon = 'bi-diagram-3'
+    update_url_name = 'club_update'
+    delete_url_name = 'club_delete'
+    list_url_name = 'club_list'
+
+    def get_detail_title(self):
+        return f'Клуб: {self.object.name}'
+
+    def get_info_rows(self):
+        club = self.object
+        return [
+            row('Название', club.name, strong=True),
+            row('Дата создания', club.created_at.strftime('%d.%m.%Y %H:%M')),
+        ]
+
+    def get_related_sections(self):
+        club = self.object
+        return [
+            {
+                'title': 'Ринги клуба',
+                'icon': 'bi-geo-alt',
+                'items': club.rings.all(),
+                'item_url_name': 'ring_detail',
+                'columns': [
+                    {'label': 'Номер', 'attr': 'number', 'style': 'strong'},
+                    {'label': 'Адрес', 'attr': 'address'},
+                ],
+                'empty_message': 'У клуба нет рингов.',
+            },
+            {
+                'title': 'Собаки клуба',
+                'icon': 'bi-clipboard-check',
+                'items': club.dogs.select_related('breed', 'owner'),
+                'item_url_name': 'dog_detail',
+                'columns': [
+                    {'label': 'Кличка', 'attr': 'name', 'style': 'strong'},
+                    {'label': 'Порода', 'attr': 'breed.name'},
+                    {'label': 'Хозяин', 'attr': 'owner.full_name'},
+                ],
+                'empty_message': 'В клубе нет собак.',
+            },
+            {
+                'title': 'Эксперты клуба',
+                'icon': 'bi-person-workspace',
+                'items': club.experts.select_related('breed', 'ring'),
+                'item_url_name': 'expert_detail',
+                'columns': [
+                    {'label': 'ФИО', 'attr': 'full_name', 'style': 'strong'},
+                    {'label': 'Специализация', 'attr': 'breed.name'},
+                    {'label': 'Статус', 'attr': 'is_active', 'style': 'bool_badge',
+                     'true_label': 'Активен', 'true_color': 'success',
+                     'false_label': 'Уволен', 'false_color': 'secondary'},
+                ],
+                'empty_message': 'В клубе нет экспертов.',
+            },
+        ]
+
+
+# ПОРОДЫ
+
+class BreedListView(MessageListView):
     model = Breed
-    template_name = 'core/generic_list.html'
-    context_object_name = 'objects'
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.update({
-            'list_title': 'Породы',
-            'list_icon': 'bi-tags',
-            'create_url': 'breed_create',
-            'create_label': 'Добавить породу',
-            'empty_message': 'Пока нет ни одной породы.',
-            'update_url_name': 'breed_update',
-            'delete_url_name': 'breed_delete',
-            'columns': [
-                {'label': 'Название', 'attr': 'name', 'style': 'strong'},
-            ],
-        })
-        return ctx
+    list_title = 'Породы'
+    list_icon = 'bi-tags'
+    create_url = 'breed_create'
+    create_label = 'Добавить породу'
+    empty_message = 'Пока нет ни одной породы.'
+    update_url_name = 'breed_update'
+    delete_url_name = 'breed_delete'
+    detail_url_name = 'breed_detail'
+    columns = [
+        {'label': 'Название', 'attr': 'name', 'style': 'strong'},
+    ]
 
 
 class BreedCreateView(MessageCreateView):
@@ -279,29 +441,90 @@ class BreedDeleteView(MessageDeleteView):
     def get_success_message(self, obj):
         return f'Порода «{obj.name}» удалена.'
 
-# Хозяева
 
-class OwnerListView(LoginRequiredMixin, ListView):
+class BreedDetailView(MessageDetailView):
+    model = Breed
+    detail_icon = 'bi-tags'
+    update_url_name = 'breed_update'
+    delete_url_name = 'breed_delete'
+    list_url_name = 'breed_list'
+
+    def get_detail_title(self):
+        return f'Порода: {self.object.name}'
+
+    def get_info_rows(self):
+        return [row('Название', self.object.name, strong=True)]
+
+    def get_related_sections(self):
+        breed = self.object
+        return [
+            {
+                'title': 'Собаки этой породы',
+                'icon': 'bi-clipboard-check',
+                'items': breed.dogs.select_related('club', 'owner'),
+                'item_url_name': 'dog_detail',
+                'columns': [
+                    {'label': 'Кличка', 'attr': 'name', 'style': 'strong'},
+                    {'label': 'Клуб', 'attr': 'club.name'},
+                    {'label': 'Хозяин', 'attr': 'owner.full_name'},
+                    {'label': 'Возраст', 'attr': 'age'},
+                ],
+                'empty_message': 'Собак этой породы нет.',
+            },
+            {
+                'title': 'Эксперты по породе',
+                'icon': 'bi-person-workspace',
+                'items': breed.experts.select_related('ring', 'club'),
+                'item_url_name': 'expert_detail',
+                'columns': [
+                    {'label': 'ФИО', 'attr': 'full_name', 'style': 'strong'},
+                    {'label': 'Ринг', 'attr': 'ring.number'},
+                    {'label': 'Клуб', 'attr': 'club.name'},
+                ],
+                'empty_message': 'По этой породе нет экспертов.',
+            },
+            {
+                'title': 'Медали по породе',
+                'icon': 'bi-award',
+                'items': breed.medals.select_related('dog'),
+                'item_url_name': 'medal_detail',
+                'columns': [
+                    {'label': 'Собака', 'attr': 'dog.name', 'style': 'strong'},
+                    {'label': 'Тип', 'attr': 'get_medal_type_display', 'style': 'medal_badge'},
+                    {'label': 'Дата', 'attr': 'awarded_at', 'style': 'date'},
+                ],
+                'empty_message': 'По этой породе ещё нет медалей.',
+            },
+            {
+                'title': 'Расписание показов',
+                'icon': 'bi-calendar-week',
+                'items': breed.schedule.select_related('ring'),
+                'item_url_name': 'schedule_detail',
+                'columns': [
+                    {'label': 'Ринг', 'attr': 'ring.number'},
+                    {'label': 'Слот', 'attr': 'time_slot'},
+                ],
+                'empty_message': 'Порода не включена в расписание.',
+            },
+        ]
+
+
+# ХОЗЯЕВА
+
+class OwnerListView(MessageListView):
     model = Owner
-    template_name = 'core/generic_list.html'
-    context_object_name = 'objects'
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.update({
-            'list_title': 'Хозяева',
-            'list_icon': 'bi-person-badge',
-            'create_url': 'owner_create',
-            'create_label': 'Добавить хозяина',
-            'empty_message': 'Пока нет ни одного хозяина.',
-            'update_url_name': 'owner_update',
-            'delete_url_name': 'owner_delete',
-            'columns': [
-                {'label': 'ФИО', 'attr': 'full_name', 'style': 'strong'},
-                {'label': 'Паспортные данные', 'attr': 'passport_data', 'style': 'code'},
-            ],
-        })
-        return ctx
+    list_title = 'Хозяева'
+    list_icon = 'bi-person-badge'
+    create_url = 'owner_create'
+    create_label = 'Добавить хозяина'
+    empty_message = 'Пока нет ни одного хозяина.'
+    update_url_name = 'owner_update'
+    delete_url_name = 'owner_delete'
+    detail_url_name = 'owner_detail'
+    columns = [
+        {'label': 'ФИО', 'attr': 'full_name', 'style': 'strong'},
+        {'label': 'Паспортные данные', 'attr': 'passport_data', 'style': 'code'},
+    ]
 
 
 class OwnerCreateView(MessageCreateView):
@@ -337,33 +560,62 @@ class OwnerDeleteView(MessageDeleteView):
         return f'Хозяин «{obj.full_name}» удалён.'
 
 
-# Ринги
+class OwnerDetailView(MessageDetailView):
+    model = Owner
+    detail_icon = 'bi-person-badge'
+    update_url_name = 'owner_update'
+    delete_url_name = 'owner_delete'
+    list_url_name = 'owner_list'
 
-class RingListView(LoginRequiredMixin, ListView):
+    def get_detail_title(self):
+        return f'Хозяин: {self.object.full_name}'
+
+    def get_info_rows(self):
+        owner = self.object
+        return [
+            row('ФИО', owner.full_name, strong=True),
+            row('Паспортные данные', owner.passport_data, code=True),
+        ]
+
+    def get_related_sections(self):
+        owner = self.object
+        return [
+            {
+                'title': 'Собаки хозяина',
+                'icon': 'bi-clipboard-check',
+                'items': owner.dogs.select_related('breed', 'club'),
+                'item_url_name': 'dog_detail',
+                'columns': [
+                    {'label': 'Кличка', 'attr': 'name', 'style': 'strong'},
+                    {'label': 'Порода', 'attr': 'breed.name'},
+                    {'label': 'Клуб', 'attr': 'club.name'},
+                    {'label': 'Возраст', 'attr': 'age'},
+                ],
+                'empty_message': 'У хозяина нет собак.',
+            },
+        ]
+
+
+# РИНГИ
+
+class RingListView(MessageListView):
     model = Ring
-    template_name = 'core/generic_list.html'
-    context_object_name = 'objects'
+    list_title = 'Ринги'
+    list_icon = 'bi-geo-alt'
+    create_url = 'ring_create'
+    create_label = 'Добавить ринг'
+    empty_message = 'Пока нет ни одного ринга.'
+    update_url_name = 'ring_update'
+    delete_url_name = 'ring_delete'
+    detail_url_name = 'ring_detail'
+    columns = [
+        {'label': 'Номер', 'attr': 'number', 'style': 'strong'},
+        {'label': 'Адрес', 'attr': 'address'},
+        {'label': 'Клуб', 'attr': 'club.name'},
+    ]
 
     def get_queryset(self):
         return Ring.objects.select_related('club')
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.update({
-            'list_title': 'Ринги',
-            'list_icon': 'bi-geo-alt',
-            'create_url': 'ring_create',
-            'create_label': 'Добавить ринг',
-            'empty_message': 'Пока нет ни одного ринга.',
-            'update_url_name': 'ring_update',
-            'delete_url_name': 'ring_delete',
-            'columns': [
-                {'label': 'Номер', 'attr': 'number', 'style': 'strong'},
-                {'label': 'Адрес', 'attr': 'address'},
-                {'label': 'Клуб', 'attr': 'club.name'},
-            ],
-        })
-        return ctx
 
 
 class RingCreateView(MessageCreateView):
@@ -399,37 +651,79 @@ class RingDeleteView(MessageDeleteView):
         return f'Ринг №{obj.number} удалён.'
 
 
-# Эксперты
+class RingDetailView(MessageDetailView):
+    model = Ring
+    detail_icon = 'bi-geo-alt'
+    update_url_name = 'ring_update'
+    delete_url_name = 'ring_delete'
+    list_url_name = 'ring_list'
 
-class ExpertListView(LoginRequiredMixin, ListView):
+    def get_detail_title(self):
+        return f'Ринг №{self.object.number}'
+
+    def get_info_rows(self):
+        ring = self.object
+        return [
+            row('Номер', ring.number, strong=True),
+            row('Адрес', ring.address),
+            row('Клуб', ring.club.name, link=reverse('club_detail', args=[ring.club.pk])),
+        ]
+
+    def get_related_sections(self):
+        ring = self.object
+        return [
+            {
+                'title': 'Эксперты ринга',
+                'icon': 'bi-person-workspace',
+                'items': ring.experts.select_related('breed', 'club'),
+                'item_url_name': 'expert_detail',
+                'columns': [
+                    {'label': 'ФИО', 'attr': 'full_name', 'style': 'strong'},
+                    {'label': 'Специализация', 'attr': 'breed.name'},
+                    {'label': 'Статус', 'attr': 'is_active', 'style': 'bool_badge',
+                     'true_label': 'Активен', 'true_color': 'success',
+                     'false_label': 'Уволен', 'false_color': 'secondary'},
+                ],
+                'empty_message': 'На ринге нет экспертов.',
+            },
+            {
+                'title': 'Расписание показов',
+                'icon': 'bi-calendar-week',
+                'items': ring.schedule.select_related('breed'),
+                'item_url_name': 'schedule_detail',
+                'columns': [
+                    {'label': 'Порода', 'attr': 'breed.name', 'style': 'strong'},
+                    {'label': 'Слот', 'attr': 'time_slot'},
+                ],
+                'empty_message': 'Расписание пусто.',
+            },
+        ]
+
+
+# ЭКСПЕРТЫ
+
+class ExpertListView(MessageListView):
     model = Expert
-    template_name = 'core/generic_list.html'
-    context_object_name = 'objects'
+    list_title = 'Эксперты'
+    list_icon = 'bi-person-workspace'
+    create_url = 'expert_create'
+    create_label = 'Добавить эксперта'
+    empty_message = 'Пока нет ни одного эксперта.'
+    update_url_name = 'expert_update'
+    delete_url_name = 'expert_delete'
+    detail_url_name = 'expert_detail'
+    columns = [
+        {'label': 'ФИО', 'attr': 'full_name', 'style': 'strong'},
+        {'label': 'Специализация', 'attr': 'breed.name'},
+        {'label': 'Ринг', 'attr': 'ring.number'},
+        {'label': 'Клуб', 'attr': 'club.name'},
+        {'label': 'Статус', 'attr': 'is_active', 'style': 'bool_badge',
+         'true_label': 'Активен', 'true_color': 'success',
+         'false_label': 'Уволен', 'false_color': 'secondary'},
+    ]
 
     def get_queryset(self):
         return Expert.objects.select_related('breed', 'ring', 'club')
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.update({
-            'list_title': 'Эксперты',
-            'list_icon': 'bi-person-workspace',
-            'create_url': 'expert_create',
-            'create_label': 'Добавить эксперта',
-            'empty_message': 'Пока нет ни одного эксперта.',
-            'update_url_name': 'expert_update',
-            'delete_url_name': 'expert_delete',
-            'columns': [
-                {'label': 'ФИО', 'attr': 'full_name', 'style': 'strong'},
-                {'label': 'Специализация', 'attr': 'breed.name'},
-                {'label': 'Ринг', 'attr': 'ring.number'},
-                {'label': 'Клуб', 'attr': 'club.name'},
-                {'label': 'Статус', 'attr': 'is_active', 'style': 'bool_badge',
-                'true_label': 'Активен', 'true_color': 'success',
-                'false_label': 'Уволен', 'false_color': 'secondary'},
-            ],
-        })
-        return ctx
 
 
 class ExpertCreateView(MessageCreateView):
@@ -464,34 +758,57 @@ class ExpertDeleteView(MessageDeleteView):
         return f'Эксперт «{obj.full_name}» удалён.'
 
 
-# Медали
+class ExpertDetailView(MessageDetailView):
+    model = Expert
+    detail_icon = 'bi-person-workspace'
+    update_url_name = 'expert_update'
+    delete_url_name = 'expert_delete'
+    list_url_name = 'expert_list'
 
-class MedalListView(LoginRequiredMixin, ListView):
+    def get_detail_title(self):
+        return f'Эксперт: {self.object.full_name}'
+
+    def get_info_rows(self):
+        expert = self.object
+        rows = [
+            row('ФИО', expert.full_name, strong=True),
+            row('Специализация', expert.breed.name,
+                link=reverse('breed_detail', args=[expert.breed.pk])),
+        ]
+        if expert.ring:
+            rows.append(row('Ринг', f'№{expert.ring.number}',
+                            link=reverse('ring_detail', args=[expert.ring.pk])))
+        else:
+            rows.append(row('Ринг', 'Не назначен', muted=True))
+        rows.append(row('Клуб', expert.club.name,
+                        link=reverse('club_detail', args=[expert.club.pk])))
+        rows.append(row('Статус',
+                        'Активен' if expert.is_active else 'Уволен',
+                        badge='success' if expert.is_active else 'secondary'))
+        return rows
+
+
+# МЕДАЛИ
+
+class MedalListView(MessageListView):
     model = Medal
-    template_name = 'core/generic_list.html'
-    context_object_name = 'objects'
+    list_title = 'Медали'
+    list_icon = 'bi-award'
+    create_url = 'medal_create'
+    create_label = 'Добавить медаль'
+    empty_message = 'Пока нет ни одной медали.'
+    update_url_name = 'medal_update'
+    delete_url_name = 'medal_delete'
+    detail_url_name = 'medal_detail'
+    columns = [
+        {'label': 'Собака', 'attr': 'dog.name', 'style': 'strong'},
+        {'label': 'Порода', 'attr': 'breed.name'},
+        {'label': 'Тип', 'attr': 'get_medal_type_display', 'style': 'medal_badge'},
+        {'label': 'Дата', 'attr': 'awarded_at', 'style': 'date'},
+    ]
 
     def get_queryset(self):
         return Medal.objects.select_related('dog', 'breed')
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.update({
-            'list_title': 'Медали',
-            'list_icon': 'bi-award',
-            'create_url': 'medal_create',
-            'create_label': 'Добавить медаль',
-            'empty_message': 'Пока нет ни одной медали.',
-            'update_url_name': 'medal_update',
-            'delete_url_name': 'medal_delete',
-            'columns': [
-                {'label': 'Собака', 'attr': 'dog.name', 'style': 'strong'},
-                {'label': 'Порода', 'attr': 'breed.name'},
-                {'label': 'Тип', 'attr': 'get_medal_type_display', 'style': 'medal_badge'},
-                {'label': 'Дата', 'attr': 'awarded_at', 'style': 'date'},
-            ],
-        })
-        return ctx
 
 
 class MedalCreateView(MessageCreateView):
@@ -526,33 +843,47 @@ class MedalDeleteView(MessageDeleteView):
         return f'Медаль удалена.'
 
 
-# Расписания
+class MedalDetailView(MessageDetailView):
+    model = Medal
+    detail_icon = 'bi-award'
+    update_url_name = 'medal_update'
+    delete_url_name = 'medal_delete'
+    list_url_name = 'medal_list'
 
-class ScheduleListView(LoginRequiredMixin, ListView):
+    def get_detail_title(self):
+        return f'Медаль: {self.object.get_medal_type_display()}'
+
+    def get_info_rows(self):
+        medal = self.object
+        return [
+            row('Собака', medal.dog.name, link=reverse('dog_detail', args=[medal.dog.pk]), strong=True),
+            row('Порода', medal.breed.name, link=reverse('breed_detail', args=[medal.breed.pk])),
+            row('Тип', medal.get_medal_type_display(),
+                badge={'Золото': 'warning', 'Серебро': 'secondary', 'Бронза': 'danger'}.get(medal.get_medal_type_display(), 'secondary')),
+            row('Дата награждения', medal.awarded_at.strftime('%d.%m.%Y')),
+        ]
+
+
+# РАСПИСАНИЯ
+
+class ScheduleListView(MessageListView):
     model = RingBreedSchedule
-    template_name = 'core/generic_list.html'
-    context_object_name = 'objects'
+    list_title = 'Расписания рингов'
+    list_icon = 'bi-calendar-week'
+    create_url = 'schedule_create'
+    create_label = 'Добавить слот'
+    empty_message = 'Пока нет ни одного слота расписания.'
+    update_url_name = 'schedule_update'
+    delete_url_name = 'schedule_delete'
+    detail_url_name = 'schedule_detail'
+    columns = [
+        {'label': 'Ринг', 'attr': 'ring.number'},
+        {'label': 'Порода', 'attr': 'breed.name', 'style': 'strong'},
+        {'label': 'Слот', 'attr': 'time_slot'},
+    ]
 
     def get_queryset(self):
         return RingBreedSchedule.objects.select_related('ring', 'breed')
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.update({
-            'list_title': 'Расписания рингов',
-            'list_icon': 'bi-calendar-week',
-            'create_url': 'schedule_create',
-            'create_label': 'Добавить слот',
-            'empty_message': 'Пока нет ни одного слота расписания.',
-            'update_url_name': 'schedule_update',
-            'delete_url_name': 'schedule_delete',
-            'columns': [
-                {'label': 'Ринг', 'attr': 'ring.number'},
-                {'label': 'Порода', 'attr': 'breed.name', 'style': 'strong'},
-                {'label': 'Слот', 'attr': 'time_slot'},
-            ],
-        })
-        return ctx
 
 
 class ScheduleCreateView(MessageCreateView):
@@ -574,7 +905,7 @@ class ScheduleUpdateView(MessageUpdateView):
     cancel_url = 'schedule_list'
 
     def get_success_message(self, obj):
-        return f'Слот обновлён: {obj}'
+        return f'Слот обновлён.'
 
 
 class ScheduleDeleteView(MessageDeleteView):
@@ -585,3 +916,24 @@ class ScheduleDeleteView(MessageDeleteView):
 
     def get_success_message(self, obj):
         return f'Слот удалён.'
+
+
+class ScheduleDetailView(MessageDetailView):
+    model = RingBreedSchedule
+    detail_icon = 'bi-calendar-week'
+    update_url_name = 'schedule_update'
+    delete_url_name = 'schedule_delete'
+    list_url_name = 'schedule_list'
+
+    def get_detail_title(self):
+        return f'Расписание: {self.object}'
+
+    def get_info_rows(self):
+        s = self.object
+        return [
+            row('Ринг', f'№{s.ring.number}',
+                link=reverse('ring_detail', args=[s.ring.pk]), strong=True),
+            row('Порода', s.breed.name,
+                link=reverse('breed_detail', args=[s.breed.pk])),
+            row('Слот', s.time_slot),
+        ]

@@ -31,15 +31,23 @@
                 {% for obj in objects %}
                     <tr>
                         {% for col in columns %}
-                            <td>{{ obj|render_cell:col }}</td>
+                            <td>
+                                {% if forloop.first and detail_url_name %}
+                                    <a href="{% url detail_url_name obj.pk %}" class="text-decoration-none">
+                                        {{ obj|render_cell:col }}
+                                    </a>
+                                {% else %}
+                                    {{ obj|render_cell:col }}
+                                {% endif %}
+                            </td>
                         {% endfor %}
                         <td class="text-end">
                             <a href="{% url update_url_name obj.pk %}"
-                               class="btn btn-sm btn-outline-secondary" title="Редактировать">
+                            class="btn btn-sm btn-outline-secondary" title="Редактировать">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <a href="{% url delete_url_name obj.pk %}"
-                               class="btn btn-sm btn-outline-danger" title="Удалить">
+                            class="btn btn-sm btn-outline-danger" title="Удалить">
                                 <i class="bi bi-trash"></i>
                             </a>
                         </td>
