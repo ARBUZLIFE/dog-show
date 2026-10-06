@@ -46,6 +46,16 @@ def render_cell(obj, column):
         return format_html(
             '<span class="badge bg-{} text-dark">{}</span>', css, value
         )
+    if style == 'bool_badge':
+        if value:
+            label = column.get('true_label', 'Да')
+            color = column.get('true_color', 'success')
+        else:
+            label = column.get('false_label', 'Нет')
+            color = column.get('false_color', 'secondary')
+        return format_html(
+            '<span class="badge bg-{}">{}</span>', color, label
+        )
     if style.startswith('badge_'):
         badge_class = style.replace('badge_', '')
         return format_html(

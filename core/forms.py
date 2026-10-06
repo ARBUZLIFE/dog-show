@@ -1,3 +1,4 @@
+import re
 from django import forms
 from django.core.exceptions import ValidationError
 from datetime import date
@@ -23,11 +24,32 @@ class BootstrapModelForm(forms.ModelForm):
 
 class DogForm(BootstrapModelForm):
 
+    pedigree_series = forms.CharField(
+        label='Серия родословной',
+        max_length=3,
+        widget=forms.TextInput(attrs={
+            'placeholder': '001',
+            'inputmode': 'numeric',
+            'autocomplete': 'off',
+        }),
+        help_text='Три цифры серии, например 001.',
+    )
+    pedigree_year = forms.CharField(
+        label='Год родословной',
+        max_length=4,
+        widget=forms.TextInput(attrs={
+            'placeholder': '2020',
+            'inputmode': 'numeric',
+            'autocomplete': 'off',
+        }),
+        help_text='Четыре цифры года, например 2020.',
+    )
+
     class Meta:
         model = Dog
         fields = [
             'name', 'breed', 'club', 'owner', 'age',
-            'pedigree_number', 'parent_names',
+            'parent_names',
             'last_vaccination_date', 'is_disqualified',
         ]
         widgets = {
@@ -40,11 +62,40 @@ class DogForm(BootstrapModelForm):
             'club': 'Клуб',
             'owner': 'Хозяин',
             'age': 'Возраст (лет)',
-            'pedigree_number': 'Номер родословной',
             'parent_names': 'Клички родителей',
             'last_vaccination_date': 'Дата последней прививки',
             'is_disqualified': 'Отстранена от участия',
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk and self.instance.pedigree_number:
+            match = re.match(r'^РКФ-(\d{3})-(\d{4})$', self.instance.pedigree_number)
+            if match:
+                self.fields['pedigree_series'].initial = match.group(1)
+                self.fields['pedigree_year'].initial = match.group(2)
+        ordered = [
+            'name', 'breed', 'club', 'owner', 'age',
+            'pedigree_series', 'pedigree_year',
+            'parent_names', 'last_vaccination_date', 'is_disqualified',
+        ]
+        self.order_fields(ordered)
+
+    def clean_pedigree_series(self):
+        series = (self.cleaned_data.get('pedigree_series') or '').strip()
+        if not series.isdigit():
+            raise ValidationError('Серия должна содержать только цифры.')
+        if len(series) != 3:
+            raise ValidationError('Серия должна состоять ровно из 3 цифр.')
+        return series
+
+    def clean_pedigree_year(self):
+        year = (self.cleaned_data.get('pedigree_year') or '').strip()
+        if not year.isdigit():
+            raise ValidationError('Год должен содержать только цифры.')
+        if len(year) != 4:
+            raise ValidationError('Год должен состоять ровно из 4 цифр.')
+        return year
 
     def clean_age(self):
         age = self.cleaned_data.get('age')
@@ -62,14 +113,34 @@ class DogForm(BootstrapModelForm):
             raise ValidationError('Дата прививки не может быть в будущем.')
         return vd
 
-    def clean_pedigree_number(self):
-        number = self.cleaned_data.get('pedigree_number')
-        qs = Dog.objects.filter(pedigree_number=number)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise ValidationError('Собака с таким номером родословной уже существует.')
-        return number
+    def clean(self):
+        """Общая валидация: собираем номер и проверяем уникальность."""
+        cleaned = super().clean()
+        series = cleaned.get('pedigree_series')
+        year = cleaned.get('pedigree_year')
+
+        if series and year:
+            full_number = f'РКФ-{series}-{year}'
+            qs = Dog.objects.filter(pedigree_number=full_number)
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                self.add_error(
+                    'pedigree_series',
+                    f'Собака с номером {full_number} уже существует.'
+                )
+        return cleaned
+
+    def save(self, commit=True):
+        dog = super().save(commit=False)
+        series = self.cleaned_data.get('pedigree_series')
+        year = self.cleaned_data.get('pedigree_year')
+        if series and year:
+            dog.pedigree_number = f'РКФ-{series}-{year}'
+        if commit:
+            dog.save()
+            self.save_m2m()
+        return dog
 
 
 class ClubForm(BootstrapModelForm):

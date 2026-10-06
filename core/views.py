@@ -102,18 +102,43 @@ def catalog_exhibitions(request):
 
 class DogListView(LoginRequiredMixin, ListView):
     model = Dog
-    template_name = 'core/dog_list.html'
-    context_object_name = 'dogs'
+    template_name = 'core/generic_list.html'
+    context_object_name = 'objects'
 
     def get_queryset(self):
         return Dog.objects.select_related('breed', 'club', 'owner')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'list_title': 'Собаки',
+            'list_icon': 'bi-clipboard-check',
+            'create_url': 'dog_create',
+            'create_label': 'Добавить собаку',
+            'empty_message': 'Пока нет ни одной собаки.',
+            'update_url_name': 'dog_update',
+            'delete_url_name': 'dog_delete',
+            'columns': [
+                {'label': 'Кличка', 'attr': 'name', 'style': 'strong'},
+                {'label': 'Порода', 'attr': 'breed.name'},
+                {'label': 'Клуб', 'attr': 'club.name'},
+                {'label': 'Хозяин', 'attr': 'owner.full_name'},
+                {'label': 'Возраст', 'attr': 'age'},
+                {'label': '№ родословной', 'attr': 'pedigree_number', 'style': 'code'},
+                {'label': 'Статус', 'attr': 'is_disqualified', 'style': 'bool_badge',
+                 'true_label': 'Отстранена', 'true_color': 'danger',
+                 'false_label': 'Участвует', 'false_color': 'success'},
+            ],
+        })
+        return ctx
 
 
 class DogCreateView(MessageCreateView):
     model = Dog
     form_class = DogForm
-    template_name = 'core/dog_form.html'
+    template_name = 'core/generic_form.html'
     success_url = reverse_lazy('dog_list')
+    cancel_url = 'dog_list'
 
     def get_success_message(self, obj):
         return f'Собака «{obj.name}» успешно добавлена.'
@@ -122,8 +147,9 @@ class DogCreateView(MessageCreateView):
 class DogUpdateView(MessageUpdateView):
     model = Dog
     form_class = DogForm
-    template_name = 'core/dog_form.html'
+    template_name = 'core/generic_form.html'
     success_url = reverse_lazy('dog_list')
+    cancel_url = 'dog_list'
 
     def get_success_message(self, obj):
         return f'Собака «{obj.name}» обновлена.'
@@ -131,8 +157,10 @@ class DogUpdateView(MessageUpdateView):
 
 class DogDeleteView(MessageDeleteView):
     model = Dog
-    template_name = 'core/dog_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('dog_list')
+    cancel_url = 'dog_list'
+    delete_warning = 'Внимание: связанные медали также будут удалены.'
 
     def get_success_message(self, obj):
         return f'Собака «{obj.name}» удалена.'
@@ -142,15 +170,33 @@ class DogDeleteView(MessageDeleteView):
 
 class ClubListView(LoginRequiredMixin, ListView):
     model = Club
-    template_name = 'core/club_list.html'
-    context_object_name = 'clubs'
+    template_name = 'core/generic_list.html'
+    context_object_name = 'objects'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'list_title': 'Клубы',
+            'list_icon': 'bi-diagram-3',
+            'create_url': 'club_create',
+            'create_label': 'Добавить клуб',
+            'empty_message': 'Пока нет ни одного клуба.',
+            'update_url_name': 'club_update',
+            'delete_url_name': 'club_delete',
+            'columns': [
+                {'label': 'Название', 'attr': 'name', 'style': 'strong'},
+                {'label': 'Дата создания', 'attr': 'created_at', 'style': 'datetime'},
+            ],
+        })
+        return ctx
 
 
 class ClubCreateView(MessageCreateView):
     model = Club
     form_class = ClubForm
-    template_name = 'core/club_form.html'
+    template_name = 'core/generic_form.html'
     success_url = reverse_lazy('club_list')
+    cancel_url = 'club_list'
 
     def get_success_message(self, obj):
         return f'Клуб «{obj.name}» добавлен.'
@@ -159,8 +205,9 @@ class ClubCreateView(MessageCreateView):
 class ClubUpdateView(MessageUpdateView):
     model = Club
     form_class = ClubForm
-    template_name = 'core/club_form.html'
+    template_name = 'core/generic_form.html'
     success_url = reverse_lazy('club_list')
+    cancel_url = 'club_list'
 
     def get_success_message(self, obj):
         return f'Клуб «{obj.name}» обновлён.'
@@ -168,26 +215,44 @@ class ClubUpdateView(MessageUpdateView):
 
 class ClubDeleteView(MessageDeleteView):
     model = Club
-    template_name = 'core/club_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('club_list')
+    cancel_url = 'club_list'
+    delete_warning = 'Внимание: связанные ринги, собаки и эксперты также будут затронуты.'
 
     def get_success_message(self, obj):
         return f'Клуб «{obj.name}» удалён.'
-
 
 # Породы
 
 class BreedListView(LoginRequiredMixin, ListView):
     model = Breed
-    template_name = 'core/breed_list.html'
-    context_object_name = 'breeds'
+    template_name = 'core/generic_list.html'
+    context_object_name = 'objects'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'list_title': 'Породы',
+            'list_icon': 'bi-tags',
+            'create_url': 'breed_create',
+            'create_label': 'Добавить породу',
+            'empty_message': 'Пока нет ни одной породы.',
+            'update_url_name': 'breed_update',
+            'delete_url_name': 'breed_delete',
+            'columns': [
+                {'label': 'Название', 'attr': 'name', 'style': 'strong'},
+            ],
+        })
+        return ctx
 
 
 class BreedCreateView(MessageCreateView):
     model = Breed
     form_class = BreedForm
-    template_name = 'core/breed_form.html'
+    template_name = 'core/generic_form.html'
     success_url = reverse_lazy('breed_list')
+    cancel_url = 'breed_list'
 
     def get_success_message(self, obj):
         return f'Порода «{obj.name}» добавлена.'
@@ -196,8 +261,9 @@ class BreedCreateView(MessageCreateView):
 class BreedUpdateView(MessageUpdateView):
     model = Breed
     form_class = BreedForm
-    template_name = 'core/breed_form.html'
+    template_name = 'core/generic_form.html'
     success_url = reverse_lazy('breed_list')
+    cancel_url = 'breed_list'
 
     def get_success_message(self, obj):
         return f'Порода «{obj.name}» обновлена.'
@@ -205,26 +271,45 @@ class BreedUpdateView(MessageUpdateView):
 
 class BreedDeleteView(MessageDeleteView):
     model = Breed
-    template_name = 'core/breed_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('breed_list')
+    cancel_url = 'breed_list'
+    delete_warning = 'Внимание: связанные собаки, эксперты и медали также будут затронуты.'
 
     def get_success_message(self, obj):
         return f'Порода «{obj.name}» удалена.'
-
 
 # Хозяева
 
 class OwnerListView(LoginRequiredMixin, ListView):
     model = Owner
-    template_name = 'core/owner_list.html'
-    context_object_name = 'owners'
+    template_name = 'core/generic_list.html'
+    context_object_name = 'objects'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'list_title': 'Хозяева',
+            'list_icon': 'bi-person-badge',
+            'create_url': 'owner_create',
+            'create_label': 'Добавить хозяина',
+            'empty_message': 'Пока нет ни одного хозяина.',
+            'update_url_name': 'owner_update',
+            'delete_url_name': 'owner_delete',
+            'columns': [
+                {'label': 'ФИО', 'attr': 'full_name', 'style': 'strong'},
+                {'label': 'Паспортные данные', 'attr': 'passport_data', 'style': 'code'},
+            ],
+        })
+        return ctx
 
 
 class OwnerCreateView(MessageCreateView):
     model = Owner
     form_class = OwnerForm
-    template_name = 'core/owner_form.html'
+    template_name = 'core/generic_form.html'
     success_url = reverse_lazy('owner_list')
+    cancel_url = 'owner_list'
 
     def get_success_message(self, obj):
         return f'Хозяин «{obj.full_name}» добавлен.'
@@ -233,8 +318,9 @@ class OwnerCreateView(MessageCreateView):
 class OwnerUpdateView(MessageUpdateView):
     model = Owner
     form_class = OwnerForm
-    template_name = 'core/owner_form.html'
+    template_name = 'core/generic_form.html'
     success_url = reverse_lazy('owner_list')
+    cancel_url = 'owner_list'
 
     def get_success_message(self, obj):
         return f'Хозяин «{obj.full_name}» обновлён.'
@@ -242,8 +328,10 @@ class OwnerUpdateView(MessageUpdateView):
 
 class OwnerDeleteView(MessageDeleteView):
     model = Owner
-    template_name = 'core/owner_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('owner_list')
+    cancel_url = 'owner_list'
+    delete_warning = 'Внимание: у хозяина могут быть собаки — они тоже будут затронуты.'
 
     def get_success_message(self, obj):
         return f'Хозяин «{obj.full_name}» удалён.'
@@ -336,7 +424,9 @@ class ExpertListView(LoginRequiredMixin, ListView):
                 {'label': 'Специализация', 'attr': 'breed.name'},
                 {'label': 'Ринг', 'attr': 'ring.number'},
                 {'label': 'Клуб', 'attr': 'club.name'},
-                {'label': 'Статус', 'attr': 'is_active', 'style': 'boolean'},
+                {'label': 'Статус', 'attr': 'is_active', 'style': 'bool_badge',
+                'true_label': 'Активен', 'true_color': 'success',
+                'false_label': 'Уволен', 'false_color': 'secondary'},
             ],
         })
         return ctx
