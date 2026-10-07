@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from .models import (
     Club, Breed, Owner, Ring,
@@ -88,9 +88,9 @@ class MedalViewSet(BaseViewSet):
         rows = (
             Club.objects
             .annotate(
-                gold=Count('dogs__medals', filter=models.Q(dogs__medals__medal_type='gold')),
-                silver=Count('dogs__medals', filter=models.Q(dogs__medals__medal_type='silver')),
-                bronze=Count('dogs__medals', filter=models.Q(dogs__medals__medal_type='bronze')),
+                gold=Count('dogs__medals', filter=Q(dogs__medals__medal_type='gold')),
+                silver=Count('dogs__medals', filter=Q(dogs__medals__medal_type='silver')),
+                bronze=Count('dogs__medals', filter=Q(dogs__medals__medal_type='bronze')),
             )
         )
         data = [
