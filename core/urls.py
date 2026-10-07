@@ -1,5 +1,4 @@
 from django.urls import path
-from . import reports as report_views
 from . import views
 
 urlpatterns = [
@@ -69,12 +68,4 @@ urlpatterns = [
     path('schedules/<int:pk>/update/', views.ScheduleUpdateView.as_view(), name='schedule_update'),
     path('schedules/<int:pk>/delete/', views.ScheduleDeleteView.as_view(), name='schedule_delete'),
 
-    # Аналитические отчёты
-    path('reports/', report_views.reports_index, name='reports'),
-    path('reports/ring-by-owner/', report_views.query_ring_by_owner, name='report_1'),
-    path('reports/breeds-by-club/', report_views.query_breeds_by_club, name='report_2'),
-    path('reports/medals-by-club/', report_views.query_medals_by_club, name='report_3'),
-    path('reports/experts-by-breed/', report_views.query_experts_by_breed, name='report_4'),
-    path('reports/ring-specializations/', report_views.query_ring_specializations, name='report_5'),
-    path('reports/record-holders/', report_views.query_record_holders, name='report_6'),
 ]
