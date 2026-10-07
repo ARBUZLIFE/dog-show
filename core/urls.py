@@ -55,11 +55,11 @@ urlpatterns = [
     # Медали
     path('medals/', views.MedalListView.as_view(), name='medal_list'),
     path('medals/create/', views.MedalCreateView.as_view(), name='medal_create'),
+    path('medals/by-club/', views.medals_by_club, name='medals_by_club'),
+    path('medals/record-holders/', views.record_holders, name='record_holders'),
     path('medals/<int:pk>/', views.MedalDetailView.as_view(), name='medal_detail'),
     path('medals/<int:pk>/update/', views.MedalUpdateView.as_view(), name='medal_update'),
     path('medals/<int:pk>/delete/', views.MedalDeleteView.as_view(), name='medal_delete'),
-    path('medals/by-club/', views.medals_by_club, name='medals_by_club'),
-    path('medals/record-holders/', views.record_holders, name='record_holders'),
 
     # Расписания
     path('schedules/', views.ScheduleListView.as_view(), name='schedule_list'),
@@ -67,5 +67,4 @@ urlpatterns = [
     path('schedules/<int:pk>/', views.ScheduleDetailView.as_view(), name='schedule_detail'),
     path('schedules/<int:pk>/update/', views.ScheduleUpdateView.as_view(), name='schedule_update'),
     path('schedules/<int:pk>/delete/', views.ScheduleDeleteView.as_view(), name='schedule_delete'),
-
 ]
