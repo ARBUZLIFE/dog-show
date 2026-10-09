@@ -55,6 +55,7 @@ urlpatterns = [
     path('experts/<int:pk>/delete/', views.ExpertDeleteView.as_view(), name='expert_delete'),
     path('experts/<int:pk>/fire/', views.ExpertFireView.as_view(), name='expert_fire'),
     path('experts/<int:pk>/rehire/', views.ExpertRehireView.as_view(), name='expert_rehire'),
+    path('experts/<int:pk>/replace/', views.ExpertReplaceView.as_view(), name='expert_replace'),
 
     # Медали
     path('medals/', views.MedalListView.as_view(), name='medal_list'),

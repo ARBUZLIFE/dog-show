@@ -84,3 +84,12 @@ def render_cell(obj, column):
         )
 
     return value
+
+@register.filter
+def has_any_group(user, group_names):
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    names = [n.strip() for n in group_names.split(',')]
+    return user.groups.filter(name__in=names).exists()

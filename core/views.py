@@ -5,6 +5,7 @@ from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.views import View
 from django.views.generic import (
@@ -19,12 +20,18 @@ from .forms import (
     DogForm, ClubForm, BreedForm, OwnerForm,
     RingForm, ExpertForm, MedalForm, ScheduleForm,
 )
+from .permissions import (
+    OrganizerRequiredMixin, ChairmanRequiredMixin, StaffRequiredMixin,
+    ORGANIZER_GROUP, CHAIRMAN_GROUP,
+    user_is_organizer, user_is_chairman, user_is_staff,
+)
 
 
 # БАЗОВЫЕ КЛАССЫ
 
-class MessageCreateView(LoginRequiredMixin, CreateView):
+class MessageCreateView(OrganizerRequiredMixin, CreateView):
     cancel_url = None
+    required_groups = (ORGANIZER_GROUP,)
 
     def form_valid(self, form):
         messages.success(self.request, self.get_success_message(form.instance))
@@ -45,8 +52,9 @@ class MessageCreateView(LoginRequiredMixin, CreateView):
         return ctx
 
 
-class MessageUpdateView(LoginRequiredMixin, UpdateView):
+class MessageUpdateView(OrganizerRequiredMixin, UpdateView):
     cancel_url = None
+    required_groups = (ORGANIZER_GROUP,)
 
     def form_valid(self, form):
         messages.success(self.request, self.get_success_message(form.instance))
@@ -67,9 +75,10 @@ class MessageUpdateView(LoginRequiredMixin, UpdateView):
         return ctx
 
 
-class MessageDeleteView(LoginRequiredMixin, DeleteView):
+class MessageDeleteView(OrganizerRequiredMixin, DeleteView):
     cancel_url = None
     delete_warning = ''
+    required_groups = (ORGANIZER_GROUP,)
 
     def form_valid(self, form):
         messages.success(self.request, self.get_success_message(self.object))
@@ -156,13 +165,8 @@ class MessageDetailView(LoginRequiredMixin, DetailView):
 
 def row(label, value, link=None, strong=False, code=False, muted=False, badge=None):
     return {
-        'label': label,
-        'value': value,
-        'link': link,
-        'strong': strong,
-        'code': code,
-        'muted': muted,
-        'badge': badge,
+        'label': label, 'value': value, 'link': link,
+        'strong': strong, 'code': code, 'muted': muted, 'badge': badge,
     }
 
 
@@ -222,6 +226,12 @@ class DogCreateView(MessageCreateView):
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('dog_list')
     cancel_url = 'dog_list'
+    required_groups = (ORGANIZER_GROUP, CHAIRMAN_GROUP)
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.GET.get('club') and not user_is_chairman(request.user):
+            raise PermissionDenied('Принимать собаку в клуб может только председатель.')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_initial(self):
         initial = super().get_initial()
@@ -252,6 +262,7 @@ class DogUpdateView(MessageUpdateView):
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('dog_list')
     cancel_url = 'dog_list'
+    required_groups = (ORGANIZER_GROUP, CHAIRMAN_GROUP)
 
     def get_success_message(self, obj):
         return f'Собака «{obj.name}» обновлена.'
@@ -263,6 +274,7 @@ class DogDeleteView(MessageDeleteView):
     success_url = reverse_lazy('dog_list')
     cancel_url = 'dog_list'
     delete_warning = 'Внимание: связанные медали также будут удалены.'
+    required_groups = (ORGANIZER_GROUP, CHAIRMAN_GROUP)
 
     def get_success_message(self, obj):
         return f'Собака «{obj.name}» удалена.'
@@ -279,6 +291,9 @@ class DogDetailView(MessageDetailView):
         return f'Собака: {self.object.name}'
 
     def get_extra_actions(self):
+        user = self.request.user
+        if not user_is_staff(user):
+            return []
         dog = self.object
         if dog.is_disqualified:
             return [{
@@ -345,6 +360,7 @@ class DogDetailView(MessageDetailView):
 
         return sections
 
+
 # КЛУБЫ
 
 class ClubListView(MessageListView):
@@ -407,6 +423,9 @@ class ClubDetailView(MessageDetailView):
         return f'Клуб: {self.object.name}'
 
     def get_extra_actions(self):
+        user = self.request.user
+        if not user_is_chairman(user):
+            return []
         club = self.object
         return [
             {
@@ -511,6 +530,7 @@ class ClubDetailView(MessageDetailView):
                 'empty_message': 'У собак этого клуба нет медалей.',
             },
         ]
+
 
 # ПОРОДЫ
 
@@ -853,12 +873,24 @@ class ExpertCreateView(MessageCreateView):
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('expert_list')
     cancel_url = 'expert_list'
+    required_groups = (ORGANIZER_GROUP, CHAIRMAN_GROUP)
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.GET.get('club') and not user_is_chairman(request.user):
+            raise PermissionDenied('Принимать эксперта в клуб может только председатель.')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_initial(self):
         initial = super().get_initial()
         club_id = self.request.GET.get('club')
         if club_id:
             initial['club'] = club_id
+        ring_id = self.request.GET.get('ring')
+        if ring_id:
+            initial['ring'] = ring_id
+        breed_id = self.request.GET.get('breed')
+        if breed_id:
+            initial['breed'] = breed_id
         return initial
 
     def get_context_data(self, **kwargs):
@@ -883,6 +915,7 @@ class ExpertUpdateView(MessageUpdateView):
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('expert_list')
     cancel_url = 'expert_list'
+    required_groups = (ORGANIZER_GROUP, CHAIRMAN_GROUP)
 
     def get_success_message(self, obj):
         return f'Эксперт «{obj.full_name}» обновлён.'
@@ -893,6 +926,7 @@ class ExpertDeleteView(MessageDeleteView):
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('expert_list')
     cancel_url = 'expert_list'
+    required_groups = (ORGANIZER_GROUP, CHAIRMAN_GROUP)
 
     def get_success_message(self, obj):
         return f'Эксперт «{obj.full_name}» удалён.'
@@ -909,20 +943,37 @@ class ExpertDetailView(MessageDetailView):
         return f'Эксперт: {self.object.full_name}'
 
     def get_extra_actions(self):
+        user = self.request.user
         expert = self.object
-        if expert.is_active:
-            return [{
-                'label': 'Уволить',
-                'url': reverse('expert_fire', args=[expert.pk]),
-                'icon': 'bi-person-x',
-                'style': 'outline-danger',
-            }]
-        return [{
-            'label': 'Принять обратно',
-            'url': reverse('expert_rehire', args=[expert.pk]),
-            'icon': 'bi-person-check',
-            'style': 'outline-success',
-        }]
+        actions = []
+
+        # «Снять с судейства» — только организатор
+        if user_is_organizer(user) and expert.is_active:
+            actions.append({
+                'label': 'Снять с судейства',
+                'url': reverse('expert_replace', args=[expert.pk]),
+                'icon': 'bi-arrow-repeat',
+                'style': 'outline-warning',
+            })
+
+        # «Уволить / Принять обратно» — только председатель
+        if user_is_chairman(user):
+            if expert.is_active:
+                actions.append({
+                    'label': 'Уволить',
+                    'url': reverse('expert_fire', args=[expert.pk]),
+                    'icon': 'bi-person-x',
+                    'style': 'outline-danger',
+                })
+            else:
+                actions.append({
+                    'label': 'Принять обратно',
+                    'url': reverse('expert_rehire', args=[expert.pk]),
+                    'icon': 'bi-person-check',
+                    'style': 'outline-success',
+                })
+
+        return actions
 
     def get_info_rows(self):
         expert = self.object
@@ -1097,19 +1148,18 @@ class ScheduleDetailView(MessageDetailView):
             row('Слот', s.time_slot),
         ]
 
+
 # ОТЧЁТЫ
 
 @login_required
 def medals_by_club(request):
     clubs = Club.objects.all()
     rows = []
-
     for club in clubs:
         medals = Medal.objects.filter(dog__club=club).values('medal_type')
         counts = defaultdict(int)
         for m in medals:
             counts[m['medal_type']] += 1
-
         rows.append({
             'club': club,
             'gold': counts.get('gold', 0),
@@ -1117,9 +1167,7 @@ def medals_by_club(request):
             'bronze': counts.get('bronze', 0),
             'total': sum(counts.values()),
         })
-
     rows.sort(key=lambda r: r['total'], reverse=True)
-
     return render(request, 'medals/by_club.html', {'rows': rows})
 
 
@@ -1131,7 +1179,6 @@ def record_holders(request):
         .filter(medal_count__gt=0)
         .select_related('breed', 'owner', 'club')
     )
-
     by_breed = defaultdict(list)
     for dog in dogs:
         by_breed[dog.breed].append(dog)
@@ -1147,19 +1194,18 @@ def record_holders(request):
             'champions': champions,
             'total_breed_medals': total_breed_medals,
         })
-
     records.sort(key=lambda x: (-x['max_count'], x['breed'].name))
-
     return render(request, 'medals/record_holders.html', {'records': records})
 
 
-# ДЕЙСТВИЯ ПРЕДСЕДАТЕЛЯ КЛУБА И ОРГАНИЗАТОРА
+# ДЕЙСТВИЯ (ОТСТРАНЕНИЕ, УВОЛЬНЕНИЕ И Т.Д.)
 
-class ConfirmActionView(LoginRequiredMixin, View):
+class ConfirmActionView(StaffRequiredMixin, View):
     model = None
     action_title = ''
     action_warning = ''
     redirect_to = ''
+    required_groups = (ORGANIZER_GROUP, CHAIRMAN_GROUP)
 
     def get_object(self, pk):
         return get_object_or_404(self.model, pk=pk)
@@ -1191,6 +1237,7 @@ class DogDisqualifyView(ConfirmActionView):
     action_title = 'Отстранить собаку от участия'
     action_warning = 'Собака не сможет участвовать в выставке до восстановления.'
     redirect_to = 'dog_detail'
+    required_groups = (ORGANIZER_GROUP, CHAIRMAN_GROUP)
 
     def perform_action(self, obj):
         obj.is_disqualified = True
@@ -1204,6 +1251,7 @@ class DogRestoreView(ConfirmActionView):
     model = Dog
     action_title = 'Восстановить собаку в участии'
     redirect_to = 'dog_detail'
+    required_groups = (ORGANIZER_GROUP, CHAIRMAN_GROUP)
 
     def perform_action(self, obj):
         obj.is_disqualified = False
@@ -1218,6 +1266,7 @@ class ExpertFireView(ConfirmActionView):
     action_title = 'Уволить эксперта из клуба'
     action_warning = 'Эксперт потеряет активный статус и не сможет судить.'
     redirect_to = 'expert_detail'
+    required_groups = (CHAIRMAN_GROUP,)
 
     def perform_action(self, obj):
         obj.is_active = False
@@ -1231,6 +1280,7 @@ class ExpertRehireView(ConfirmActionView):
     model = Expert
     action_title = 'Принять эксперта обратно в клуб'
     redirect_to = 'expert_detail'
+    required_groups = (CHAIRMAN_GROUP,)
 
     def perform_action(self, obj):
         obj.is_active = True
@@ -1238,3 +1288,34 @@ class ExpertRehireView(ConfirmActionView):
 
     def get_success_message(self, obj):
         return f'Эксперт «{obj.full_name}» снова активен.'
+
+
+class ExpertReplaceView(OrganizerRequiredMixin, View):
+    required_groups = (ORGANIZER_GROUP,)
+
+    def get(self, request, pk):
+        expert = get_object_or_404(Expert, pk=pk)
+        return render(request, 'core/confirm_action.html', {
+            'object': expert,
+            'action_title': 'Снять эксперта с судейства',
+            'action_warning': (
+                'Эксперт будет помечен как неактивный. '
+                'Далее откроется форма добавления нового эксперта '
+                'с теми же параметрами (порода, ринг, клуб).'
+            ),
+            'cancel_url': reverse('expert_detail', args=[pk]),
+        })
+
+    def post(self, request, pk):
+        expert = get_object_or_404(Expert, pk=pk)
+        expert.is_active = False
+        expert.save(update_fields=['is_active'])
+        messages.success(
+            request,
+            f'Эксперт «{expert.full_name}» снят с судейства. '
+            'Заполните данные нового эксперта.'
+        )
+        params = [f'breed={expert.breed_id}', f'club={expert.club_id}']
+        if expert.ring_id:
+            params.append(f'ring={expert.ring_id}')
+        return redirect(f"{reverse('expert_create')}?{'&'.join(params)}")

@@ -1,10 +1,13 @@
 import pytest
 from datetime import date
+
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 
 from core.models import (
     Club, Breed, Owner, Ring, Expert, Dog, Medal, RingBreedSchedule,
 )
+from core.permissions import ORGANIZER_GROUP, CHAIRMAN_GROUP
 
 User = get_user_model()
 
@@ -22,10 +25,32 @@ def user(db):
 @pytest.fixture
 def admin_user(db):
     return User.objects.create_superuser(
-        username='admin',
+        username='admin_test',
         password='admin12345',
         email='admin@example.com',
     )
+
+
+@pytest.fixture
+def organizer_user(db):
+    user = User.objects.create_user(
+        username='organizer',
+        password='organizer12345',
+    )
+    group, _ = Group.objects.get_or_create(name=ORGANIZER_GROUP)
+    user.groups.add(group)
+    return user
+
+
+@pytest.fixture
+def chairman_user(db):
+    user = User.objects.create_user(
+        username='chairman',
+        password='chairman12345',
+    )
+    group, _ = Group.objects.get_or_create(name=CHAIRMAN_GROUP)
+    user.groups.add(group)
+    return user
 
 
 # Справочники
@@ -60,7 +85,11 @@ def owner(db):
 
 @pytest.fixture
 def ring(db, club):
-    return Ring.objects.create(number=1, address='ул. Ленина, 10', club=club)
+    return Ring.objects.create(
+        number=1,
+        address='ул. Ленина, 10',
+        club=club,
+    )
 
 
 @pytest.fixture
