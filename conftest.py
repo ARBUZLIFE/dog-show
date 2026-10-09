@@ -13,7 +13,6 @@ User = get_user_model()
 
 @pytest.fixture
 def user(db):
-    """Обычный авторизованный пользователь."""
     return User.objects.create_user(
         username='tester',
         password='testpass123',
@@ -22,7 +21,6 @@ def user(db):
 
 @pytest.fixture
 def admin_user(db):
-    """Суперпользователь."""
     return User.objects.create_superuser(
         username='admin',
         password='admin12345',

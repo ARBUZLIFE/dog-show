@@ -10,7 +10,12 @@
         {% if detail_icon %}<i class="bi {{ detail_icon }}"></i>{% endif %}
         {{ detail_title }}
     </h1>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
+        {% for action in extra_actions %}
+            <a href="{{ action.url }}" class="btn btn-{{ action.style|default:'outline-primary' }}">
+                <i class="bi {{ action.icon }}"></i> {{ action.label }}
+            </a>
+        {% endfor %}
         {% if list_url_name %}
             <a href="{% url list_url_name %}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> К списку

@@ -16,6 +16,8 @@ urlpatterns = [
     path('dogs/<int:pk>/', views.DogDetailView.as_view(), name='dog_detail'),
     path('dogs/<int:pk>/update/', views.DogUpdateView.as_view(), name='dog_update'),
     path('dogs/<int:pk>/delete/', views.DogDeleteView.as_view(), name='dog_delete'),
+    path('dogs/<int:pk>/disqualify/', views.DogDisqualifyView.as_view(), name='dog_disqualify'),
+    path('dogs/<int:pk>/restore/', views.DogRestoreView.as_view(), name='dog_restore'),
 
     # Клубы
     path('clubs/', views.ClubListView.as_view(), name='club_list'),
@@ -51,6 +53,8 @@ urlpatterns = [
     path('experts/<int:pk>/', views.ExpertDetailView.as_view(), name='expert_detail'),
     path('experts/<int:pk>/update/', views.ExpertUpdateView.as_view(), name='expert_update'),
     path('experts/<int:pk>/delete/', views.ExpertDeleteView.as_view(), name='expert_delete'),
+    path('experts/<int:pk>/fire/', views.ExpertFireView.as_view(), name='expert_fire'),
+    path('experts/<int:pk>/rehire/', views.ExpertRehireView.as_view(), name='expert_rehire'),
 
     # Медали
     path('medals/', views.MedalListView.as_view(), name='medal_list'),

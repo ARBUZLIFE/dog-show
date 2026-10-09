@@ -114,7 +114,6 @@ class DogForm(BootstrapModelForm):
         return vd
 
     def clean(self):
-        """Общая валидация: собираем номер и проверяем уникальность."""
         cleaned = super().clean()
         series = cleaned.get('pedigree_series')
         year = cleaned.get('pedigree_year')

@@ -61,7 +61,6 @@ class DogViewSet(BaseViewSet):
 
     @action(detail=True, methods=['post'])
     def disqualify(self, request, pk=None):
-        """Отстранить собаку от участия."""
         dog = self.get_object()
         dog.is_disqualified = True
         dog.save(update_fields=['is_disqualified'])
@@ -69,7 +68,6 @@ class DogViewSet(BaseViewSet):
 
     @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):
-        """Восстановить собаку в участии."""
         dog = self.get_object()
         dog.is_disqualified = False
         dog.save(update_fields=['is_disqualified'])
@@ -84,7 +82,6 @@ class MedalViewSet(BaseViewSet):
 
     @action(detail=False, methods=['get'])
     def by_club(self, request):
-        """Сводка медалей по клубам."""
         rows = (
             Club.objects
             .annotate(

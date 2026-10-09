@@ -78,3 +78,62 @@ def test_record_holders_report(client, user, medal):
     assert response.status_code == 200
     content = response.content.decode()
     assert 'Рекс' in content
+
+
+def test_dog_disqualify(client, user, dog):
+    client.force_login(user)
+
+    # GET — страница подтверждения
+    response = client.get(reverse('dog_disqualify', args=[dog.pk]))
+    assert response.status_code == 200
+    assert 'Отстранить' in response.content.decode()
+
+    # POST — выполняем
+    response = client.post(reverse('dog_disqualify', args=[dog.pk]))
+    assert response.status_code == 302
+
+    dog.refresh_from_db()
+    assert dog.is_disqualified is True
+
+
+def test_dog_restore(client, user, dog):
+    dog.is_disqualified = True
+    dog.save()
+
+    client.force_login(user)
+    response = client.post(reverse('dog_restore', args=[dog.pk]))
+    assert response.status_code == 302
+
+    dog.refresh_from_db()
+    assert dog.is_disqualified is False
+
+
+def test_expert_fire(client, user, expert):
+    client.force_login(user)
+    response = client.post(reverse('expert_fire', args=[expert.pk]))
+    assert response.status_code == 302
+
+    expert.refresh_from_db()
+    assert expert.is_active is False
+
+
+def test_expert_rehire(client, user, expert):
+    expert.is_active = False
+    expert.save()
+
+    client.force_login(user)
+    response = client.post(reverse('expert_rehire', args=[expert.pk]))
+    assert response.status_code == 302
+
+    expert.refresh_from_db()
+    assert expert.is_active is True
+
+
+def test_dog_create_with_prefilled_club(client, user, club, breed, owner):
+    client.force_login(user)
+
+    # Открываем форму с параметром ?club=X
+    url = reverse('dog_create') + f'?club={club.pk}'
+    response = client.get(url)
+    assert response.status_code == 200
+    assert f'будет принята в клуб' in response.content.decode()
