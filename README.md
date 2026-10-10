@@ -10,12 +10,12 @@
 ## Стек технологий
 
 - **Python** 3.12+
-- **Django** 5.2 — веб-фреймворк
-- **Django REST Framework** — REST API
-- **PostgreSQL** — база данных
-- **Bootstrap 5** — фронтенд-фреймворк
-- **drf-spectacular** — генерация Swagger-документации
-- **pytest** + **pytest-django** — автотесты
+- **Django** 5.2 - веб-фреймворк
+- **Django REST Framework** - REST API
+- **PostgreSQL** - база данных
+- **Bootstrap 5** - фронтенд-фреймворк
+- **drf-spectacular** - генерация Swagger-документации
+- **pytest** + **pytest-django** - автотесты
 
 ---
 

@@ -544,7 +544,7 @@ class ClubDetailView(MessageDetailView):
                 'items': breeds_with_count,
                 'item_url_name': None,
                 'custom_template': 'core/_breed_summary_table.html',
-                'empty_message': 'У клуба нет собак — породы не определены.',
+                'empty_message': 'У клуба нет собак - породы не определены.',
             },
             {
                 'title': 'Медали клуба',
@@ -981,7 +981,6 @@ class ExpertDetailView(MessageDetailView):
         expert = self.object
         actions = []
 
-        # «Снять с судейства» — только организатор
         if user_is_organizer(user) and expert.is_active:
             actions.append({
                 'label': 'Снять с судейства',
@@ -990,7 +989,6 @@ class ExpertDetailView(MessageDetailView):
                 'style': 'outline-warning',
             })
 
-        # «Уволить / Принять обратно» — только председатель
         if user_is_chairman(user):
             if expert.is_active:
                 actions.append({

@@ -47,7 +47,7 @@ def render_cell(obj, column):
         value = value()
 
     if value is None or value == '':
-        return format_html('<span class="text-muted">—</span>')
+        return format_html('<span class="text-muted">-</span>')
 
     if style == 'strong':
         return format_html('<strong>{}</strong>', value)

@@ -264,7 +264,7 @@ class ScheduleForm(BootstrapModelForm):
                 existing = qs.first()
                 raise ValidationError(
                     f'Порода «{breed.name}» уже выступает на ринге '
-                    f'№{existing.ring.number}. Каждая порода — один ринг.'
+                    f'№{existing.ring.number}. Каждая порода - один ринг.'
                 )
 
             qs2 = RingBreedSchedule.objects.filter(ring=ring, breed=breed)

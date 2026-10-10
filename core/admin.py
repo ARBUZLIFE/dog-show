@@ -49,7 +49,7 @@ class MedalAdmin(admin.ModelAdmin):
     list_display = ('dog', 'breed', 'medal_type', 'awarded_at')
     list_filter = ('medal_type', 'breed')
     search_fields = ('dog__name',)
-    exclude = ('breed',)  # убираем из формы админки
+    exclude = ('breed',) 
 
 
 @admin.register(RingBreedSchedule)

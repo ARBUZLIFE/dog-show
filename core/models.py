@@ -61,7 +61,7 @@ class Ring(models.Model):
     def get_schedule_summary(self):
         slots = self.schedule.select_related('breed').order_by('time_slot')
         if not slots.exists():
-            return '—'
+            return '-'
         return '; '.join(f'{s.breed.name} ({s.time_slot})' for s in slots)
 
 
@@ -152,7 +152,7 @@ class Medal(models.Model):
         related_name='medals',
         verbose_name='Порода',
         blank=True,
-        null=True,  # заполняется автоматически
+        null=True,
     )
     medal_type = models.CharField('Тип медали', max_length=10, choices=MEDAL_TYPES)
     awarded_at = models.DateField('Дата награждения')
@@ -163,7 +163,7 @@ class Medal(models.Model):
         ordering = ['-awarded_at']
 
     def __str__(self):
-        return f'{self.get_medal_type_display()} — {self.dog.name}'
+        return f'{self.get_medal_type_display()} - {self.dog.name}'
 
     def save(self, *args, **kwargs):
         if self.dog_id and (self.breed_id != self.dog.breed_id):
@@ -193,4 +193,4 @@ class RingBreedSchedule(models.Model):
         ordering = ['ring', 'time_slot']
 
     def __str__(self):
-        return f'{self.ring} — {self.breed.name} ({self.time_slot})'
+        return f'{self.ring} - {self.breed.name} ({self.time_slot})'

@@ -24,7 +24,6 @@ def test_api_create_breed(client, admin_user):
         data={'name': 'Такса'},
         content_type='application/json',
     )
-    # DRF может вернуть 201 при успехе
     assert response.status_code == 201
     assert response.json()['name'] == 'Такса'
 
