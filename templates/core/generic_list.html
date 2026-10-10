@@ -10,7 +10,7 @@
         {% if list_icon %}<i class="bi {{ list_icon }}"></i>{% endif %}
         {{ list_title }}
     </h1>
-    {% if create_url and user|has_any_group:"Организатор выставки,Председатель клуба" %}
+    {% if create_url and can_edit %}
         <a href="{% url create_url %}" class="btn btn-primary">
             <i class="bi bi-plus-circle"></i> {{ create_label|default:"Добавить" }}
         </a>
@@ -43,7 +43,7 @@
                             </td>
                         {% endfor %}
                         <td class="text-end">
-                            {% if user|has_any_group:"Организатор выставки,Председатель клуба" %}
+                            {% if can_edit %}
                                 <a href="{% url update_url_name obj.pk %}"
                                 class="btn btn-sm btn-outline-secondary" title="Редактировать">
                                     <i class="bi bi-pencil"></i>

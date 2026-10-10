@@ -6,3 +6,4 @@ python-dotenv>=1.0
 pytest>=8.3
 pytest-django>=4.9
 pytest-cov>=6.0
+django-filter>=24.3

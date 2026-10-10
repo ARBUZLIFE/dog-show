@@ -193,6 +193,24 @@ class ExpertForm(BootstrapModelForm):
         cleaned = super().clean()
         club = cleaned.get('club')
         ring = cleaned.get('ring')
+        breed = cleaned.get('breed')
+
+        if club and ring and ring.club_id != club.id:
+            raise ValidationError('Выбранный ринг принадлежит другому клубу.')
+
+        if ring and breed:
+            if not RingBreedSchedule.objects.filter(ring=ring, breed=breed).exists():
+                raise ValidationError(
+                    f'Порода «{breed.name}» не выступает на этом ринге. '
+                    'Сначала добавьте её в расписание ринга.'
+                )
+
+        return cleaned
+
+    def clean(self):
+        cleaned = super().clean()
+        club = cleaned.get('club')
+        ring = cleaned.get('ring')
         if club and ring and ring.club_id != club.id:
             raise ValidationError(
                 'Выбранный ринг принадлежит другому клубу.'
@@ -213,6 +231,15 @@ class MedalForm(BootstrapModelForm):
             'awarded_at': 'Дата награждения',
         }
 
+    def clean(self):
+        cleaned = super().clean()
+        dog = cleaned.get('dog')
+        if dog and dog.is_disqualified:
+            raise ValidationError(
+                f'Нельзя выдать медаль собаке «{dog.name}»: она отстранена от участия.'
+            )
+        return cleaned
+
 
 class ScheduleForm(BootstrapModelForm):
     class Meta:
@@ -223,3 +250,29 @@ class ScheduleForm(BootstrapModelForm):
             'breed': 'Порода',
             'time_slot': 'Временной слот',
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        ring = cleaned.get('ring')
+        breed = cleaned.get('breed')
+
+        if ring and breed:
+            qs = RingBreedSchedule.objects.filter(breed=breed).exclude(ring=ring)
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                existing = qs.first()
+                raise ValidationError(
+                    f'Порода «{breed.name}» уже выступает на ринге '
+                    f'№{existing.ring.number}. Каждая порода — один ринг.'
+                )
+
+            qs2 = RingBreedSchedule.objects.filter(ring=ring, breed=breed)
+            if self.instance.pk:
+                qs2 = qs2.exclude(pk=self.instance.pk)
+            if qs2.exists():
+                raise ValidationError(
+                    f'Порода «{breed.name}» уже в расписании этого ринга.'
+                )
+
+        return cleaned

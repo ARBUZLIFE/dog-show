@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from django.db.models import Count, Q
+from django_filters.rest_framework import DjangoFilterBackend
+
+from .api_permissions import IsOrganizerOrReadOnly, IsStaffOrReadOnly
 
 from .models import (
     Club, Breed, Owner, Ring,
@@ -17,10 +20,10 @@ from .serializers import (
 
 class BaseViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
 
 class ClubViewSet(BaseViewSet):
+    permission_classes = [IsOrganizerOrReadOnly]
     queryset = Club.objects.all()
     serializer_class = ClubSerializer
     search_fields = ['name']
@@ -28,18 +31,21 @@ class ClubViewSet(BaseViewSet):
 
 
 class BreedViewSet(BaseViewSet):
+    permission_classes = [IsOrganizerOrReadOnly]
     queryset = Breed.objects.all()
     serializer_class = BreedSerializer
     search_fields = ['name']
 
 
 class OwnerViewSet(BaseViewSet):
+    permission_classes = [IsOrganizerOrReadOnly]
     queryset = Owner.objects.all()
     serializer_class = OwnerSerializer
     search_fields = ['full_name', 'passport_data']
 
 
 class RingViewSet(BaseViewSet):
+    permission_classes = [IsOrganizerOrReadOnly]
     queryset = Ring.objects.select_related('club')
     serializer_class = RingSerializer
     search_fields = ['number', 'address']
@@ -47,6 +53,7 @@ class RingViewSet(BaseViewSet):
 
 
 class ExpertViewSet(BaseViewSet):
+    permission_classes = [IsStaffOrReadOnly]
     queryset = Expert.objects.select_related('breed', 'ring', 'club')
     serializer_class = ExpertSerializer
     search_fields = ['full_name']
@@ -54,6 +61,7 @@ class ExpertViewSet(BaseViewSet):
 
 
 class DogViewSet(BaseViewSet):
+    permission_classes = [IsStaffOrReadOnly]
     queryset = Dog.objects.select_related('breed', 'club', 'owner')
     serializer_class = DogSerializer
     search_fields = ['name', 'pedigree_number']
@@ -75,6 +83,7 @@ class DogViewSet(BaseViewSet):
 
 
 class MedalViewSet(BaseViewSet):
+    permission_classes = [IsOrganizerOrReadOnly]
     queryset = Medal.objects.select_related('dog', 'breed')
     serializer_class = MedalSerializer
     filterset_fields = ['medal_type', 'breed', 'dog']
@@ -105,6 +114,7 @@ class MedalViewSet(BaseViewSet):
 
 
 class RingBreedScheduleViewSet(BaseViewSet):
+    permission_classes = [IsOrganizerOrReadOnly]
     queryset = RingBreedSchedule.objects.select_related('ring', 'breed')
     serializer_class = RingBreedScheduleSerializer
     filterset_fields = ['ring', 'breed']

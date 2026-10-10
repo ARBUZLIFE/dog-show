@@ -11,6 +11,7 @@ from django.views import View
 from django.views.generic import (
     ListView, CreateView, UpdateView, DeleteView, DetailView,
 )
+from django.db.models.deletion import ProtectedError
 
 from .models import (
     Dog, Club, Breed, Owner,
@@ -78,14 +79,24 @@ class MessageUpdateView(OrganizerRequiredMixin, UpdateView):
 class MessageDeleteView(OrganizerRequiredMixin, DeleteView):
     cancel_url = None
     delete_warning = ''
+    detail_url_name = None
     required_groups = (ORGANIZER_GROUP,)
 
     def form_valid(self, form):
-        messages.success(self.request, self.get_success_message(self.object))
-        return super().form_valid(form)
-
-    def get_success_message(self, obj):
-        return f'Объект «{obj}» удалён.'
+        obj = self.object
+        try:
+            response = super().form_valid(form)
+        except ProtectedError:
+            messages.error(
+                self.request,
+                f'Невозможно удалить «{obj}»: на объект ссылаются '
+                'связанные записи. Сначала удалите или переназначьте их.'
+            )
+            if self.detail_url_name:
+                return redirect(self.detail_url_name, pk=obj.pk)
+            return redirect(self.success_url)
+        messages.success(self.request, self.get_success_message(obj))
+        return response
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -108,6 +119,16 @@ class MessageListView(LoginRequiredMixin, ListView):
     delete_url_name = None
     columns = []
 
+    can_edit_groups = (ORGANIZER_GROUP,)
+
+    def can_edit(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return False
+        if user.is_superuser:
+            return True
+        return user.groups.filter(name__in=self.can_edit_groups).exists()
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update({
@@ -120,6 +141,7 @@ class MessageListView(LoginRequiredMixin, ListView):
             'update_url_name': self.update_url_name,
             'delete_url_name': self.delete_url_name,
             'columns': self.columns,
+            'can_edit': self.can_edit(),
         })
         return ctx
 
@@ -215,6 +237,7 @@ class DogListView(MessageListView):
          'true_label': 'Отстранена', 'true_color': 'danger',
          'false_label': 'Участвует', 'false_color': 'success'},
     ]
+    can_edit_groups = (ORGANIZER_GROUP, CHAIRMAN_GROUP)
 
     def get_queryset(self):
         return Dog.objects.select_related('breed', 'club', 'owner')
@@ -406,10 +429,12 @@ class ClubDeleteView(MessageDeleteView):
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('club_list')
     cancel_url = 'club_list'
-    delete_warning = 'Внимание: связанные ринги, собаки и эксперты также будут затронуты.'
+    delete_warning = 'Удаление запрещено, если в клубе есть собаки, эксперты или ринги.'
 
     def get_success_message(self, obj):
         return f'Клуб «{obj.name}» удалён.'
+
+    detail_url_name = 'club_detail'
 
 
 class ClubDetailView(MessageDetailView):
@@ -576,10 +601,12 @@ class BreedDeleteView(MessageDeleteView):
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('breed_list')
     cancel_url = 'breed_list'
-    delete_warning = 'Внимание: связанные собаки, эксперты и медали также будут затронуты.'
+    delete_warning = 'Удаление запрещено, если по породе есть собаки, эксперты, медали или расписание.'
 
     def get_success_message(self, obj):
         return f'Порода «{obj.name}» удалена.'
+    
+    detail_url_name = 'breed_detail'
 
 
 class BreedDetailView(MessageDetailView):
@@ -694,10 +721,12 @@ class OwnerDeleteView(MessageDeleteView):
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('owner_list')
     cancel_url = 'owner_list'
-    delete_warning = 'Внимание: у хозяина могут быть собаки — они тоже будут затронуты.'
+    delete_warning = 'Удаление запрещено, если у хозяина есть собаки.'
 
     def get_success_message(self, obj):
         return f'Хозяин «{obj.full_name}» удалён.'
+
+    detail_url_name = 'owner_detail'
 
 
 class OwnerDetailView(MessageDetailView):
@@ -786,10 +815,12 @@ class RingDeleteView(MessageDeleteView):
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('ring_list')
     cancel_url = 'ring_list'
-    delete_warning = 'Внимание: связанные расписания и эксперты также будут затронуты.'
+    delete_warning = 'Расписание ринга будет удалено. Эксперты останутся без ринга.'
 
     def get_success_message(self, obj):
         return f'Ринг №{obj.number} удалён.'
+
+    detail_url_name = 'ring_detail'
 
 
 class RingDetailView(MessageDetailView):
@@ -862,6 +893,7 @@ class ExpertListView(MessageListView):
          'true_label': 'Активен', 'true_color': 'success',
          'false_label': 'Уволен', 'false_color': 'secondary'},
     ]
+    can_edit_groups = (ORGANIZER_GROUP, CHAIRMAN_GROUP)
 
     def get_queryset(self):
         return Expert.objects.select_related('breed', 'ring', 'club')
@@ -882,7 +914,7 @@ class ExpertCreateView(MessageCreateView):
 
     def get_initial(self):
         initial = super().get_initial()
-        club_id = self.request.GET.get('club')
+        club_id = self.request.GET.get('club') or self.request.GET.get('replace_club')
         if club_id:
             initial['club'] = club_id
         ring_id = self.request.GET.get('ring')
@@ -903,6 +935,8 @@ class ExpertCreateView(MessageCreateView):
                 ctx['cancel_url_explicit'] = reverse('club_detail', args=[club.pk])
             except Club.DoesNotExist:
                 pass
+        elif self.request.GET.get('replace_club'):
+            ctx['form_note'] = 'Замена эксперта: заполните данные нового эксперта.'
         return ctx
 
     def get_success_message(self, obj):
@@ -1315,7 +1349,7 @@ class ExpertReplaceView(OrganizerRequiredMixin, View):
             f'Эксперт «{expert.full_name}» снят с судейства. '
             'Заполните данные нового эксперта.'
         )
-        params = [f'breed={expert.breed_id}', f'club={expert.club_id}']
+        params = [f'breed={expert.breed_id}', f'replace_club={expert.club_id}']
         if expert.ring_id:
             params.append(f'ring={expert.ring_id}')
         return redirect(f"{reverse('expert_create')}?{'&'.join(params)}")
